@@ -1,7 +1,7 @@
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 import pandas as pd
 
-def preprocess(data: pd.date_range) -> tuple[pd.DataFrame, dict[str, LabelEncoder]]:
+def preprocess(data: pd.date_range) -> tuple[pd.DataFrame, dict[str, LabelEncoder], StandardScaler]:
     '''
     TODO: finish doc string
     '''
@@ -17,9 +17,9 @@ def preprocess(data: pd.date_range) -> tuple[pd.DataFrame, dict[str, LabelEncode
     data = encode_categorical_features(data, label_encoders)
 
     # TODO: standardize/normalize data
-    data = standardize_data(data)
+    data, scaler = standardize_data(data)
 
-    return data, label_encoders
+    return data, label_encoders, scaler
 
 def reduce_features(data: pd.DataFrame):
     ''' TODO: finish this implementation! '''
@@ -27,12 +27,17 @@ def reduce_features(data: pd.DataFrame):
     data = data.drop(columns=[
         'PoolQC',       # 99.5% are nan.
         'MiscFeature',  # 96.9% are nan.
+        'Fence',        # 80.6% are nan.
+        'FireplaceQu',  # 47.0% are nan. Also highly correlated with 'Fireplaces'.
     ])
 
     return data
 
 def handle_nans(data: pd.DataFrame) -> pd.DataFrame:
-    # TODO: implement me!
+    # TODO: finish implementation!
+
+    # drop rows containing nans. There are 54 rows with nans for 5 features related to garages.
+    data = data.dropna()
     return data
 
 def create_label_encoders(data: pd.DataFrame) -> dict[str, LabelEncoder]:
@@ -56,6 +61,7 @@ def encode_categorical_features(data: pd.DataFrame, label_encoders: dict[str, La
         data[feature] = label_encoders[feature].transform(data[feature])
     return data
 
-def standardize_data(data: pd.DataFrame):
-    # TODO: implement me!
-    return data
+def standardize_data(data: pd.DataFrame) -> tuple[pd.DateOffset, StandardScaler]:
+    scaler = StandardScaler()
+    scaler.fit_transform(data)
+    return data, scaler

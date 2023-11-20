@@ -1,9 +1,5 @@
 from sklearn.cluster import KMeans
-import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
-
-from preproces import preprocess
 
 def elbow_method(data, clusters_to_test):
     inertias = []
@@ -15,8 +11,9 @@ def elbow_method(data, clusters_to_test):
     plt.title('Elbow method')
     plt.xlabel('Number of clusters')
     plt.ylabel('Inertia')
+    plt.savefig('ElbowMethodGraph.png')
     plt.show()
-
+    
 def run_kmeans(data, k, max_iter=300, num_trials=10):
     kmeans = KMeans(
         n_clusters=k,
@@ -25,15 +22,3 @@ def run_kmeans(data, k, max_iter=300, num_trials=10):
     )
     kmeans.fit(data)
     return kmeans
-
-if __name__ == '__main__':
-    
-    # TODO: replace with full dataset
-    data = pd.read_csv('datasets/train_2.csv')
-
-    # TODO: standardize data
-    preprocessed_data, label_encoders = preprocess(data)
-
-    elbow_method(preprocessed_data, 3)
-
-
