@@ -1,9 +1,13 @@
 from preprocess import preprocess
 from kmeans import elbow_method, run_kmeans
-from cluster_classifier import test_classifiers, fit_classifier
+from cluster_classifier import test_classifiers, fit_classifier, grid_search
 import pandas as pd
 
 K = 4
+
+
+
+
 
 if __name__ == '__main__':
     
@@ -14,6 +18,8 @@ if __name__ == '__main__':
     training_clusters = kmeans.predict(training_data)
 
     # classifiers, scores = test_classifiers(training_data, training_clusters)
-    cluster_svm, training_accuracy = fit_classifier(training_data, training_clusters)
+    grid_search(training_data, training_clusters)
+    # cluster_svm, training_accuracy = fit_classifier(training_data, training_clusters)
+
 
     pass
