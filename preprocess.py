@@ -1,9 +1,11 @@
 from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.decomposition import PCA
 import pandas as pd
 
-def preprocess(data: pd.date_range) -> tuple[pd.DataFrame, dict[str, LabelEncoder], StandardScaler]:
+def preprocess(data: pd.date_range) -> tuple[pd.DataFrame, dict[str, LabelEncoder], StandardScaler, PCA]:
     '''
     TODO: finish doc string
+    TODO: support preprocessing training and testing data
     '''
 
     # TODO: reduce features from 79 to 35
@@ -19,7 +21,10 @@ def preprocess(data: pd.date_range) -> tuple[pd.DataFrame, dict[str, LabelEncode
     # TODO: standardize/normalize data
     data, scaler = standardize_data(data)
 
-    return data, label_encoders, scaler
+    # utilize pca to drop remaining feature count to 35
+    data, pca = run_pca(data)
+
+    return data, label_encoders, scaler, pca
 
 def reduce_features(data: pd.DataFrame):
     ''' TODO: finish this implementation! '''
@@ -29,6 +34,8 @@ def reduce_features(data: pd.DataFrame):
         'MiscFeature',  # 96.9% are nan.
         'Fence',        # 80.6% are nan.
         'FireplaceQu',  # 47.0% are nan. Also highly correlated with 'Fireplaces'.
+        'GarageCars',   # Highly correlated with 'GarageArea'.
+        'TotRmsAbvGrd', # Highly correlated with 'GrLivArea'.
     ])
 
     return data
@@ -65,3 +72,8 @@ def standardize_data(data: pd.DataFrame) -> tuple[pd.DateOffset, StandardScaler]
     scaler = StandardScaler()
     scaler.fit_transform(data)
     return data, scaler
+
+def run_pca(data: pd.DataFrame) -> tuple[pd.DataFrame, PCA]:
+    pca=PCA(n_components=35)
+    data = pca.fit_transform(data)
+    return data, pca

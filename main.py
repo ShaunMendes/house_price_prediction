@@ -5,10 +5,6 @@ import pandas as pd
 
 K = 4
 
-
-
-
-
 if __name__ == '__main__':
     
     training_data = pd.read_csv('datasets/train_2.csv')
@@ -20,6 +16,5 @@ if __name__ == '__main__':
     # classifiers, scores = test_classifiers(training_data, training_clusters)
     grid_search(training_data, training_clusters)
     # cluster_svm, training_accuracy = fit_classifier(training_data, training_clusters)
-
 
     pass

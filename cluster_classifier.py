@@ -40,8 +40,6 @@ def grid_search(x, y):
     print(classification_report(y, grid_predictions)) 
     print(confusion_matrix(y, grid_predictions))
 
-    pass
-
 def fit_classifier(x, y):
     # Try a linear classifier first. if linear models don't work well enough, then try a non linear
     svm = SVC(kernel="linear", C=0.025, random_state=42)
