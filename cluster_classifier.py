@@ -5,6 +5,7 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report, confusion_matrix
+import numpy as np
 
 def test_classifiers(x, y):
     
@@ -46,3 +47,23 @@ def fit_classifier(x, y):
     svm.fit(x, y)
     training_accuracy = svm.score(x, y)
     return svm, training_accuracy
+
+
+def save_cluster_to_disk(training_data: np.array, training_clusters: np.array):
+    """
+    Saves each cluster numpy array onto disk without cluster id
+    """
+
+    clusters = np.unique(training_clusters)
+    training_clusters = np.expand_dims(training_clusters, axis=1)
+    training_clusters_w_cluster_id = np.concatenate(
+        (training_data, training_clusters), axis=1
+    )
+    for cluster in clusters:
+        with open(f"datasets/cluster_{cluster}.npy", "wb") as f:
+            np.save(
+                f,
+                training_clusters_w_cluster_id[
+                    training_clusters_w_cluster_id[:, -1] == cluster
+                ][:, :-1],
+            )
