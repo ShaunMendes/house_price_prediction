@@ -49,7 +49,6 @@ def reduce_features(data: pd.DataFrame):
     ''' 
     Drop features that have many nan values, are highly correlated with other features, 
     or that are largely uniform.
-    NOTE: My comemnts below are based our EDA of the training data
     '''
 
     data = data.drop(columns=[
@@ -68,9 +67,13 @@ def reduce_features(data: pd.DataFrame):
         'KitchenAbvGr', # Majority of values belong to a single category.
         'Heating',      # Majority of values belong to a single category.
         'YearBuilt',    # Highly correlated with many other features.
+        'OverallQual',  # Highly correlated with many other features.
 
-        'OverallQual', 
-        'GarageCond',
+        'GarageCond',   # 
+
+        'Neighborhood', # TODO: test data has categories not found in training data
+        'Exterior1st',  # TODO: test data has categories not found in training data... weak correlation with price
+        'Functional',   # TODO: test data has categories not found in training data... weak correlation with price
 
 
         "Unnamed: 0",   # just row numbers
@@ -85,8 +88,6 @@ def reduce_features(data: pd.DataFrame):
         "BsmtFinSF1",   # Majority values belong to single category
         "BsmtFinSF2"    # Majority values belong to single category
     ])
-
-    print('test')
 
     return data
 

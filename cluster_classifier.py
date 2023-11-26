@@ -43,7 +43,7 @@ def grid_search(x, y):
 
 def fit_classifier(x, y):
     # Try a linear classifier first. if linear models don't work well enough, then try a non linear
-    svm = SVC(kernel="linear", C=0.025, random_state=42)
+    svm = SVC(kernel="linear", C=0.1, random_state=42)
     svm.fit(x, y)
     training_accuracy = svm.score(x, y)
     return svm, training_accuracy
