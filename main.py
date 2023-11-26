@@ -17,10 +17,6 @@ def create_subsets(classifier, k: int, x_train: np.ndarray, y_train: np.ndarray,
     training_groups = classifier.predict(x_train)
     test_groups = classifier.predict(x_test)
 
-    # set up a list for sanity check TODO: remove this
-    train_sanity_check = 0
-    test_sanity_check = 0
-
     # create k subsets
     for i in range(k):
 
@@ -45,29 +41,19 @@ def create_subsets(classifier, k: int, x_train: np.ndarray, y_train: np.ndarray,
 
         })
 
-        train_sanity_check += len(xi_train) + len(xi_val)
-        test_sanity_check += len(x_test[test_groups == i])
-
-    assert len(x_train) == train_sanity_check
-    assert len(x_test) == test_sanity_check
-
     return subsets
 
 if __name__ == '__main__':
     
+    # load and preprocess data
     training_data = pd.read_csv('datasets/train.csv')
     test_data = pd.read_csv('datasets/test.csv')
     x_train, y_train, x_test, y_test, label_encoders, scaler, pca = preprocess(training_data, test_data)
 
+    # train kmeans and generate ground truth clusters
     kmeans = run_kmeans(x_train, K)
     training_clusters = kmeans.predict(x_train)
     test_clusters = kmeans.predict(x_test)
-
-    '''
-    TODO:
-        - split training data by cluster... use kmeans or classifier to do this? im assuming its the classifier
-        - create validation sets from the training data
-    '''
 
     # # determine which the best classifier and its hyperparameters.
     # classifiers, scores = test_classifiers(x_train, training_clusters)
@@ -82,6 +68,7 @@ if __name__ == '__main__':
     subsets = create_subsets(cluster_svm, K, x_train, y_train, x_test, y_test)
 
     # code to dump the subsets to a pickle file
+    
     subset_file = open('subsets.pkl', 'wb')
     dump(subsets, subset_file)
     subset_file.close()
