@@ -25,14 +25,13 @@ def test_data_predicton(training_data: pd.DataFrame, test_data: pd.DataFrame):
     x_train, y_train, x_test, y_test, label_encoders, scaler, pca = preprocess(training_data, test_data, standardize_price=True)
 
     '''
-    TODO: load all trained models? or pass them in?
+    TODO: train the models here? load prexisting trained models? pass the models in?
 
     - use the classifier to predict which group each sample belongs to
     - use the group model that corresponds to each sample's predicted group to run inference.
     - return results?
 
     '''
-
 
 if __name__ == '__main__':
     
