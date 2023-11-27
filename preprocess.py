@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 
 def preprocess(training_data: pd.DataFrame, test_data: pd.DataFrame, standardize_price: bool = True) \
-            -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, dict[str, LabelEncoder], StandardScaler, PCA]:
+            -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, dict[str, LabelEncoder], StandardScaler, StandardScaler, PCA]:
     
     '''
     A single function to preprocess training and testing data.
@@ -36,14 +36,18 @@ def preprocess(training_data: pd.DataFrame, test_data: pd.DataFrame, standardize
 
     # standardize features
     if standardize_price:
-        x_train, x_test, y_train, y_test, scaler = standardize_data(x_train, x_test, y_train, y_test)
+        x_train, x_test, feature_scaler = standardize_data(x_train, x_test)
+        y_train, y_test, price_scaler = standardize_data(y_train, y_test)
     else:
-        x_train, x_test, scaler = standardize_data(x_train, x_test)
+        x_train, x_test, feature_scaler = standardize_data(x_train, x_test)
 
     # utilize pca to drop remaining feature count to 35
     x_train, x_test, pca = run_pca(x_train, x_test)
 
-    return x_train, y_train, x_test, y_test, label_encoders, scaler, pca
+    if standardize_price:
+        return x_train, y_train.flatten(), x_test, y_test.flatten(), label_encoders, feature_scaler, price_scaler, pca
+    else:
+        return x_train, y_train, x_test, y_test, label_encoders, feature_scaler, pca
 
 def reduce_features(data: pd.DataFrame):
     ''' 
@@ -121,20 +125,14 @@ def encode_categorical_features(data: pd.DataFrame, label_encoders: dict[str, La
         data[feature] = label_encoders[feature].transform(data[feature])
     return data
 
-def standardize_data(x_train, x_test, y_train=None, y_test=None):
+def standardize_data(train: np.ndarray, test: np.ndarray):
     ''' TODO: finish doc string '''
     scaler = StandardScaler()
-    if y_train is None or y_test is None:
-        x_train = scaler.fit_transform(x_train)
-        x_test = scaler.transform(x_test)
-        return x_train, x_test, scaler
-    else: 
-        train = np.column_stack([x_train, y_train])
-        test = np.column_stack([x_test, y_test])
-        train = scaler.fit_transform(train)
-        test = scaler.transform(test)
-        x_train, x_test, y_train, y_test = train[:, :-1], test[:, :-1], train[:, -1], test[:, -1]
-        return x_train, x_test, y_train, y_test, scaler
+    if len(train.shape) == 1: train = train.reshape([-1, 1])
+    if len(test.shape) == 1: test = test.reshape([-1, 1])
+    train = scaler.fit_transform(train)
+    test = scaler.transform(test)
+    return train, test, scaler
 
 def run_pca(training_data: np.ndarray, test_data: np.ndarray) -> tuple[np.ndarray, np.ndarray, PCA]:
     ''' Use PCA on the training and testing data to reduce the feature count. '''

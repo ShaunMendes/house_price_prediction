@@ -2,7 +2,7 @@ from preprocess import preprocess
 from kmeans import elbow_method, run_kmeans
 from cluster_classifier import test_classifiers, fit_classifier, classifier_grid_search, create_groups
 from pickle import dump, load
-from group_models import group_0, group_1, group_2, group_3
+from group_models import group_0, group_1, group_2, group_3, start_regressor_expeirments
 import pandas as pd
 import numpy as np
 
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     # load and preprocess data
     training_data = pd.read_csv('datasets/train.csv')
     test_data = pd.read_csv('datasets/test.csv')
-    x_train, y_train, x_test, y_test, label_encoders, scaler, pca = preprocess(training_data, test_data, standardize_price=True)
+    x_train, y_train, x_test, y_test, label_encoders, feature_scaler, price_scaler, pca = preprocess(training_data, test_data, standardize_price=True)
 
     # train kmeans and generate ground truth clusters
     kmeans = run_kmeans(x_train, K)
@@ -57,10 +57,14 @@ if __name__ == '__main__':
     # use the classifier to split data into groups
     groups = create_groups(cluster_svm, K, x_train, y_train, x_test, y_test)
 
+    # start_regressor_expeirments(groups[0], price_scaler)
+
     # TODO: train group models
-    group_0(groups[0])
-    group_1(groups[1])
-    group_2(groups[2])
-    group_3(groups[3])
+    results = group_0(groups[0], price_scaler)
+    # group_1(groups[1])
+    # group_2(groups[2])
+    # group_3(groups[3])
+
+
 
     pass
