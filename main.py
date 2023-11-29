@@ -1,12 +1,19 @@
 from preprocess import preprocess
-from kmeans import elbow_method, run_kmeans
-from cluster_classifier import test_classifiers, fit_classifier, classifier_grid_search, create_groups
-from pickle import dump, load
-from group_models import group_0, group_1, group_2, group_3, start_regressor_expeirments
+from kmeans import elbow_method, train_kmeans
+from cluster_classifier import test_classifiers, fit_classifier, classifier_grid_search, create_groups, load_groups
+from joblib import dump, load
+from group_models import group_0, group_1, group_2, start_regressor_expeirments
 import pandas as pd
 import numpy as np
+from os.path import exists
 
-K = 4
+K = 3
+
+def save_model(model, file):
+    dump(model, file)
+
+def load_model(file):
+    return load(file)
 
 def test_data_predicton(training_data: pd.DataFrame, test_data: pd.DataFrame):
     '''
@@ -40,30 +47,34 @@ if __name__ == '__main__':
     test_data = pd.read_csv('datasets/test.csv')
     x_train, y_train, x_test, y_test, label_encoders, feature_scaler, price_scaler, pca = preprocess(training_data, test_data, standardize_price=True)
 
-    # train kmeans and generate ground truth clusters
-    kmeans = run_kmeans(x_train, K)
-    training_clusters = kmeans.predict(x_train)
-    test_clusters = kmeans.predict(x_test)
+    # # train kmeans and generate ground truth clusters
+    # kmeans = train_kmeans(x_train, K)
+    # training_clusters = kmeans.predict(x_train)
+    # test_clusters = kmeans.predict(x_test)
+
+    # load trained kmeans
+    kmeans = load_model('trained_models/kmeans')
 
     # # determine which the best classifier and its hyperparameters.
     # classifiers, scores = test_classifiers(x_train, training_clusters)
     # grid_search(x_train, training_clusters)
 
-    # train the cluster classifier
-    cluster_svm, training_accuracy = fit_classifier(x_train, training_clusters)
-    test_accuracy = cluster_svm.score(x_test, test_clusters)
-    print(f'\n--- Cluster Classifier ---\nTraining accuracy = {training_accuracy}\nTest Accuracy = {test_accuracy}\n')
+    # # train the cluster classifier
+    # cluster_svm, training_accuracy = fit_classifier(x_train, training_clusters)
+    # test_accuracy = cluster_svm.score(x_test, test_clusters)
+    # print(f'\n--- Cluster Classifier ---\nTraining accuracy = {training_accuracy}\nTest Accuracy = {test_accuracy}\n')
+
+    # load trained svm
+    cluster_svm = load_model('trained_models/svm')
+    # print(cluster_svm.score(x_test, kmeans.predict(x_test)))
 
     # use the classifier to split data into groups
-    groups = create_groups(cluster_svm, K, x_train, y_train, x_test, y_test)
-
-    # start_regressor_expeirments(groups[0], price_scaler)
+    # groups = create_groups(cluster_svm, K, x_train, y_train, x_test, y_test)
 
     # TODO: train group models
-    results = group_0(groups[0], price_scaler)
-    # group_1(groups[1])
-    # group_2(groups[2])
-    # group_3(groups[3])
+    results = group_0(load_groups('datasets/groups/0'), price_scaler)
+    group_1('datasets/groups/1')
+    group_2('datasets/groups/2')
 
 
 

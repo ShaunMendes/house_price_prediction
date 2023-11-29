@@ -60,25 +60,28 @@ def reduce_features(data: pd.DataFrame):
         'MiscFeature',  # 96.9% are nan.
         'Fence',        # 80.6% are nan.
         'FireplaceQu',  # 47.0% are nan. Also highly correlated with 'Fireplaces'.
-        'GarageCars',   # Highly correlated with 'GarageArea'.
-        'TotRmsAbvGrd', # Highly correlated with 'GrLivArea'.
-        'TotalBsmtSF',  # Highly correlated with '1stFlrSF'.
+        # 'TotRmsAbvGrd', # Highly correlated with 'GrLivArea'.
         'Exterior2nd',  # Highly correlated with 'Exterior1st'.
-        'GarageYrBlt',  # Highly correlated with 'GarageFinish'.
+        'GarageFinish', # Highly correlated with 'GarageYrBlt'.
         'BldgType',     # Highly correlated with 'MSSubClass', and many values in one category.
         'LandSlope',    # Highly correlated with 'LandContour, and many values in one category.
         'LowQualFinSF', # Majority of values belong to a single category.
         'KitchenAbvGr', # Majority of values belong to a single category.
         'Heating',      # Majority of values belong to a single category.
-        'YearBuilt',    # Highly correlated with many other features.
-        'OverallQual',  # Highly correlated with many other features.
+        # 'YearBuilt',    # Highly correlated with many other features.
+        # 'OverallQual',  # Highly correlated with many other features.
+
+        '1stFlrSF',     # rolled into GrLivArea
+        '2ndFlrSF',     # rolled into GrLivArea
 
         'GarageCond',   # 
+        'GarageYrBlt',  # correlated with 'YearBuilt'.
+        'GarageArea',   # correlated with 'GarageCars'.
+        'Foundation',   # correlated with 'YearBuilt'.
 
         'Neighborhood', # TODO: test data has categories not found in training data
         'Exterior1st',  # TODO: test data has categories not found in training data... weak correlation with price
         'Functional',   # TODO: test data has categories not found in training data... weak correlation with price
-
 
         "Unnamed: 0",   # just row numbers
         "Id",           # has all unique ids
@@ -89,8 +92,9 @@ def reduce_features(data: pd.DataFrame):
         "Condition2",   # Majority values belong to single category
         "RoofMatl",     # Majority values belong to single category
         "MasVnrArea",   # Majority values belong to single category - can be added back later
-        "BsmtFinSF1",   # Majority values belong to single category
-        "BsmtFinSF2"    # Majority values belong to single category
+        "BsmtFinSF1",   # Majority values belong to single category. apart of TotalBsmtSF
+        "BsmtFinSF2",   # Majority values belong to single category. apart of TotalBsmtSF
+        'BsmtUnfSF',    # apart of TotalBsmtSF.
     ])
 
     return data
@@ -136,7 +140,7 @@ def standardize_data(train: np.ndarray, test: np.ndarray):
 
 def run_pca(training_data: np.ndarray, test_data: np.ndarray) -> tuple[np.ndarray, np.ndarray, PCA]:
     ''' Use PCA on the training and testing data to reduce the feature count. '''
-    pca=PCA(n_components=35)
+    pca=PCA(n_components=35, random_state=1234)
     training_data = pca.fit_transform(training_data)
     test_data = pca.transform(test_data)
     return training_data, test_data, pca

@@ -7,6 +7,9 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
 import numpy as np
+from joblib import dump
+from os import makedirs, listdir
+from os.path import join
 
 def test_classifiers(x, y):
     ''' Try out a few different classifiers to examine their results '''
@@ -46,14 +49,15 @@ def classifier_grid_search(x, y):
     print(classification_report(y, grid_predictions)) 
     print(confusion_matrix(y, grid_predictions))
 
-def fit_classifier(x, y):
+def fit_classifier(x, y, output_file='trained_models/svm'):
     ''' Train a classifier '''
     svm = SVC(kernel="linear", C=0.1, random_state=42)
     svm.fit(x, y)
     training_accuracy = svm.score(x, y)
+    dump(svm, output_file)
     return svm, training_accuracy
 
-def create_groups(classifier, k: int, x_train: np.ndarray, y_train: np.ndarray, x_test: np.ndarray, y_test: np.ndarray, val_size: float = 0.1):
+def create_groups(classifier, k: int, x_train: np.ndarray, y_train: np.ndarray, x_test: np.ndarray, y_test: np.ndarray, val_size: float = 0.1, output_dir='datasets/groups/'):
 
     # set up a list to store the subsets
     groups = []
@@ -73,7 +77,7 @@ def create_groups(classifier, k: int, x_train: np.ndarray, y_train: np.ndarray, 
             random_state=1234
         )
 
-        groups.append({
+        group_data = {
 
             'x_train': xi_train,
             'y_train': yi_train,
@@ -84,7 +88,14 @@ def create_groups(classifier, k: int, x_train: np.ndarray, y_train: np.ndarray, 
             'x_test': x_test[test_groups == i],
             'y_test': y_test[test_groups == i],
 
-        })
+        }
+
+        groups.append(group_data)
+
+        dir = join(output_dir, str(i))
+        makedirs(dir, exist_ok=True)
+        for key in group_data:
+            np.save(join(dir, f'{key}.npy'), group_data[key])
 
     # # code to dump the subsets to a pickle file
     # groups_file = open('groups.pkl', 'wb')
@@ -92,6 +103,12 @@ def create_groups(classifier, k: int, x_train: np.ndarray, y_train: np.ndarray, 
     # groups_file.close()
 
     return groups
+
+def load_groups(group_dir) -> dict[str, np.ndarray]:
+    data = {}
+    for subset in listdir(group_dir):
+        data[subset.removesuffix('.npy')] = np.load(join(group_dir, subset))
+    return data
 
 def save_cluster_to_disk(training_data: np.ndarray, training_clusters: np.ndarray):
     """
