@@ -2,8 +2,10 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.decomposition import PCA
 import pandas as pd
 import numpy as np
+from joblib import dump
+from os.path import join
 
-def preprocess(training_data: pd.DataFrame, test_data: pd.DataFrame, standardize_price: bool = True) \
+def preprocess(training_data: pd.DataFrame, test_data: pd.DataFrame, standardize_price: bool = True, model_dir='trained_models') \
             -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, dict[str, LabelEncoder], StandardScaler, StandardScaler, PCA]:
     
     '''
@@ -40,6 +42,9 @@ def preprocess(training_data: pd.DataFrame, test_data: pd.DataFrame, standardize
         y_train, y_test, price_scaler = standardize_data(y_train, y_test)
     else:
         x_train, x_test, feature_scaler = standardize_data(x_train, x_test)
+
+    # save the price standardizer
+    dump(price_scaler, join(model_dir, 'price_scaler'))
 
     # utilize pca to drop remaining feature count to 35
     x_train, x_test, pca = run_pca(x_train, x_test)

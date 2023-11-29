@@ -4,7 +4,7 @@ from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.neural_network import MLPRegressor
 from sklearn.ensemble import StackingRegressor
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.preprocessing import StandardScaler
 import numpy as np
 import optuna
@@ -26,15 +26,15 @@ def group_0(data: dict[str, np.ndarray], scaler: StandardScaler):
 
     group_0_model = StackingRegressor([
         ('LinearRegression', LinearRegression()),
-        ('Ridge', Ridge(alpha=10, solver='saga')),
-        ('SVR', SVR(kernel='linear', gamma='scale', C=2.3609999999999998)),
+        ('Ridge', Ridge(alpha=4.45, solver='lsqr')),
+        ('SVR', SVR(kernel='linear', gamma='scale', C=0.01412668132688239)),
         ('MLPR', MLPRegressor(
-            hidden_layer_sizes=(30,20),
+            hidden_layer_sizes=(40,65),
             activation='identity',
             solver='adam',
-            alpha=0.005559340227398926,
-            learning_rate='adaptive',
-            learning_rate_init=0.0006506360597208436
+            alpha=0.00033734602221738514,
+            learning_rate='constant',
+            learning_rate_init=0.011891710835565153
         ))
     ])
 
@@ -46,18 +46,22 @@ def group_0(data: dict[str, np.ndarray], scaler: StandardScaler):
     group_0_model.fit(x_train, y_train)
 
     # TODO compute MAE and RMSE
+    train_prices = (scaler.inverse_transform(y_train.reshape(-1, 1)), scaler.inverse_transform(group_0_model.predict(x_train).reshape(-1, 1)))
+    test_prices = (scaler.inverse_transform(data['y_test'].reshape(-1, 1)), scaler.inverse_transform(group_0_model.predict(data['x_test']).reshape(-1, 1)))
 
-    train_mse = mean_squared_error(
-        scaler.inverse_transform(y_train.reshape(-1, 1)) , 
-        scaler.inverse_transform(group_0_model.predict(x_train).reshape(-1, 1))
-    )
+    train_mse = mean_squared_error(*train_prices)
+    test_mse = mean_squared_error(*test_prices)
 
-    test_mse = mean_squared_error(
-        scaler.inverse_transform(data['y_test'].reshape(-1, 1)) , 
-        scaler.inverse_transform(group_0_model.predict(data['x_test']).reshape(-1, 1))
-    )
+    metrics = {
+        'train_mse': mean_squared_error(*train_prices),
+        'test_mse': mean_squared_error(*test_prices),
+        'train_rmse': mean_squared_error(*train_prices, squared=False),
+        'test_rmse': mean_squared_error(*test_prices, squared=False),  
+        'train_mae': mean_absolute_error(*train_prices),
+        'test_mae': mean_absolute_error(*test_prices)
+    }
 
-    return group_0_model, train_mse, test_mse
+    return group_0_model, metrics
 
 def group_1(data: dict[str, np.ndarray]):
     '''
