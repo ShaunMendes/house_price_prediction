@@ -53,19 +53,13 @@ def test_data_predicton(training_data: pd.DataFrame, test_data: pd.DataFrame):
 
 
 if __name__ == "__main__":
-    # load and preprocess data
-    training_data = pd.read_csv("datasets/train.csv")
-    test_data = pd.read_csv("datasets/test.csv")
-    (
-        x_train,
-        y_train,
-        x_test,
-        y_test,
-        label_encoders,
-        feature_scaler,
-        price_scaler,
-        pca,
-    ) = preprocess(training_data, test_data, standardize_price=True)
+    # # load and preprocess data
+    # training_data = pd.read_csv('datasets/train.csv')
+    # test_data = pd.read_csv('datasets/test.csv')
+    # x_train, y_train, x_test, y_test, label_encoders, feature_scaler, price_scaler, pca = preprocess(training_data, test_data, standardize_price=True)
+
+    # load price scaler
+    price_scaler = load_model("trained_models/price_scaler")
 
     # # train kmeans and generate ground truth clusters
     # kmeans = train_kmeans(x_train, K)
@@ -90,6 +84,9 @@ if __name__ == "__main__":
 
     # use the classifier to split data into groups
     # groups = create_groups(cluster_svm, K, x_train, y_train, x_test, y_test)
+
+    # hypertune model
+    # start_regressor_expeirments(load_groups('datasets/groups/0'), price_scaler, 'rev4')
 
     # TODO: train group models
     trainer = TrainGroupModels(price_scaler=price_scaler)

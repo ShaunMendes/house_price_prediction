@@ -4,7 +4,7 @@ from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.neural_network import MLPRegressor
 from sklearn.ensemble import StackingRegressor, GradientBoostingRegressor
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.preprocessing import StandardScaler
 import numpy as np
 import optuna
@@ -26,6 +26,7 @@ class TrainGroupModels:
         self.price_scaler = price_scaler
 
     def group_0(self) -> StackingRegressor:
+        # jesse
         return StackingRegressor(
             [
                 ("LinearRegression", LinearRegression()),
@@ -46,6 +47,7 @@ class TrainGroupModels:
         )
 
     def group_1(self) -> StackingRegressor:
+        # shaun
         svr_params = {"C": 1, "gamma": 0.1, "kernel": "linear"}
         ridge_paras = {"alpha": 100}
         mlpreg_params = {
@@ -73,12 +75,14 @@ class TrainGroupModels:
         return StackingRegressor(estimators)
 
     def group_2(self) -> StackingRegressor:
+        # harsha
         pass
 
     def group_ds_path(self, group_id):
         return f"datasets/groups/{group_id}"
 
     def group_model(self, group_id) -> StackingRegressor:
+        # change this once harsha's model is ready
         models = {0: self.group_0, 1: self.group_1, 2: self.group_1}
         return models[group_id]
 
@@ -86,6 +90,7 @@ class TrainGroupModels:
         return load_groups(self.group_ds_path(group_id))
 
     def train_and_evaluate(self, group_id: str):
+        print(f"Training Group {group_id}")
         data = self.load_data(group_id)
         stacked_model = self.group_model(group_id)()
 
@@ -94,23 +99,31 @@ class TrainGroupModels:
 
         stacked_model.fit(x_train, y_train)
 
-        train_mse = mean_squared_error(
+        train_prices = (
             self.price_scaler.inverse_transform(y_train.reshape(-1, 1)),
             self.price_scaler.inverse_transform(
                 stacked_model.predict(x_train).reshape(-1, 1)
             ),
         )
-
-        print(f"Train MSE is {train_mse}")
-
-        test_mse = mean_squared_error(
+        test_prices = (
             self.price_scaler.inverse_transform(data["y_test"].reshape(-1, 1)),
             self.price_scaler.inverse_transform(
                 stacked_model.predict(data["x_test"]).reshape(-1, 1)
             ),
         )
 
-        print(f"Test MSE is {test_mse}")
+        train_mse = mean_squared_error(*train_prices)
+        test_mse = mean_squared_error(*test_prices)
+
+        metrics = {
+            "train_mse": mean_squared_error(*train_prices),
+            "test_mse": mean_squared_error(*test_prices),
+            "train_rmse": mean_squared_error(*train_prices, squared=False),
+            "test_rmse": mean_squared_error(*test_prices, squared=False),
+            "train_mae": mean_absolute_error(*train_prices),
+            "test_mae": mean_absolute_error(*test_prices),
+        }
+        print(f"Test MSE is {metrics}")
         return stacked_model, train_mse, test_mse
 
 
