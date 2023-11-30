@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 from joblib import dump
 from os.path import join
+from os import makedirs
 
 def preprocess(training_data: pd.DataFrame, test_data: pd.DataFrame, standardize_price: bool = True, model_dir='trained_models') \
             -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, dict[str, LabelEncoder], StandardScaler, StandardScaler, PCA]:
@@ -43,16 +44,35 @@ def preprocess(training_data: pd.DataFrame, test_data: pd.DataFrame, standardize
     else:
         x_train, x_test, feature_scaler = standardize_data(x_train, x_test)
 
-    # save the price standardizer
-    dump(price_scaler, join(model_dir, 'price_scaler'))
-
     # utilize pca to drop remaining feature count to 35
     x_train, x_test, pca = run_pca(x_train, x_test)
+
+    # save all trained components
+    makedirs(model_dir, exist_ok=True)
+    dump(label_encoders, join(model_dir, 'label_encoders'))
+    dump(feature_scaler, join(model_dir, 'feature_scaler'))
+    dump(price_scaler, join(model_dir, 'price_scaler'))
+    dump(pca, join(model_dir, 'pca'))
 
     if standardize_price:
         return x_train, y_train.flatten(), x_test, y_test.flatten(), label_encoders, feature_scaler, price_scaler, pca
     else:
         return x_train, y_train, x_test, y_test, label_encoders, feature_scaler, pca
+
+def preprocess_for_inference(test_data: pd.DataFrame, label_encoders: dict[str, LabelEncoder], feature_scaler: StandardScaler, price_scaler: StandardScaler, pca: PCA):
+    
+    test_data = reduce_features(test_data)
+    test_data = handle_nans(test_data)
+    test_data = encode_categorical_features(test_data, label_encoders)
+
+    x_test = test_data.drop(columns=['SalePrice']).to_numpy()
+    y_test = test_data['SalePrice'].to_numpy()
+
+    x_test = feature_scaler.transform(x_test)
+    y_test = price_scaler.transform(y_test)
+    x_test = pca.transform(x_test)
+    
+    return x_test, y_test
 
 def reduce_features(data: pd.DataFrame):
     ''' 

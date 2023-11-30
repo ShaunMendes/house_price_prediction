@@ -21,7 +21,7 @@ NOTE: the data dictionaries have the following keys:
 
 def group_0(data: dict[str, np.ndarray], scaler: StandardScaler):
     '''
-    TODO: retune model now that data is frozen
+    TODO: try tuning a boosting model to see if its better than one of these 4
     '''
 
     group_0_model = StackingRegressor([

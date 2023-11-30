@@ -12,9 +12,6 @@ K = 3
 def save_model(model, file):
     dump(model, file)
 
-def load_model(file):
-    return load(file)
-
 def test_data_predicton(training_data: pd.DataFrame, test_data: pd.DataFrame):
     '''
     TODO: this is a function the professor requires us to implement. requirements listed below:
@@ -48,7 +45,7 @@ if __name__ == '__main__':
     # x_train, y_train, x_test, y_test, label_encoders, feature_scaler, price_scaler, pca = preprocess(training_data, test_data, standardize_price=True)
 
     # load price scaler
-    price_scaler = load_model('trained_models/price_scaler')
+    price_scaler = load('trained_models/price_scaler')
 
     # # train kmeans and generate ground truth clusters
     # kmeans = train_kmeans(x_train, K)
@@ -56,7 +53,7 @@ if __name__ == '__main__':
     # test_clusters = kmeans.predict(x_test)
 
     # load trained kmeans
-    kmeans = load_model('trained_models/kmeans')
+    kmeans = load('trained_models/kmeans')
 
     # # determine which the best classifier and its hyperparameters.
     # classifiers, scores = test_classifiers(x_train, training_clusters)
@@ -68,7 +65,7 @@ if __name__ == '__main__':
     # print(f'\n--- Cluster Classifier ---\nTraining accuracy = {training_accuracy}\nTest Accuracy = {test_accuracy}\n')
 
     # load trained svm
-    cluster_svm = load_model('trained_models/svm')
+    cluster_svm = load('trained_models/svm')
     # print(cluster_svm.score(x_test, kmeans.predict(x_test)))
 
     # use the classifier to split data into groups
