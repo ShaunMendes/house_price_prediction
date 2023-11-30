@@ -1,44 +1,50 @@
 from preprocess import preprocess
 from kmeans import elbow_method, train_kmeans
-from cluster_classifier import test_classifiers, fit_classifier, classifier_grid_search, create_groups, load_groups
+from cluster_classifier import (
+    test_classifiers,
+    fit_classifier,
+    classifier_grid_search,
+    create_groups,
+    load_groups,
+)
 from joblib import dump, load
-from group_models import group_0, group_1, group_2, start_regressor_expeirments
+from group_models import TrainGroupModels, start_regressor_expeirments
 import pandas as pd
 import numpy as np
 from os.path import exists
 
 K = 3
 
-def save_model(model, file):
-    dump(model, file)
 
 def test_data_predicton(training_data: pd.DataFrame, test_data: pd.DataFrame):
-    '''
+    """
     TODO: this is a function the professor requires us to implement. requirements listed below:
 
-    Write a function, test_data_prediction(train data, test data), that transforms the test 
-    data into the train data format, e.g., the same features, scales, etc, and predicts the 
-    house price using the trained best models. 
+    Write a function, test_data_prediction(train data, test data), that transforms the test
+    data into the train data format, e.g., the same features, scales, etc, and predicts the
+    house price using the trained best models.
 
     NOTE: does the prof expect us to run training and test inference from this function?
         if not, then why accept the training data as an input?
-    
-    '''
-    
-    # preprocess data
-    x_train, y_train, x_test, y_test, label_encoders, scaler, pca = preprocess(training_data, test_data, standardize_price=True)
 
-    '''
+    """
+
+    # preprocess data
+    x_train, y_train, x_test, y_test, label_encoders, scaler, pca = preprocess(
+        training_data, test_data, standardize_price=True
+    )
+
+    """
     TODO: train the models here? load prexisting trained models? pass the models in?
 
     - use the classifier to predict which group each sample belongs to
     - use the group model that corresponds to each sample's predicted group to run inference.
     - return results?
 
-    '''
+    """
 
-if __name__ == '__main__':
-    
+
+if __name__ == "__main__":
     # # load and preprocess data
     # training_data = pd.read_csv('datasets/train.csv')
     # test_data = pd.read_csv('datasets/test.csv')
@@ -75,10 +81,9 @@ if __name__ == '__main__':
     # start_regressor_expeirments(load_groups('datasets/groups/0'), price_scaler, 'rev4')
 
     # TODO: train group models
-    g0_model, g0_metrics = group_0(load_groups('datasets/groups/0'), price_scaler)
-    # group_1('datasets/groups/1')
-    # group_2('datasets/groups/2')
-
-
+    trainer = TrainGroupModels(price_scaler=price_scaler)
+    model0, _, _ = trainer.train_and_evaluate(group_id=0)
+    model1, _, _ = trainer.train_and_evaluate(group_id=1)
+    model2, _, _ = trainer.train_and_evaluate(group_id=2)
 
     pass
