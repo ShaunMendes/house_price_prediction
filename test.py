@@ -44,12 +44,14 @@ def test_data_predicton(training_data: pd.DataFrame, test_data: pd.DataFrame):
 
     # run inference
     y_preds = np.array([])
+    y_true = np.array([])
     for i, group in enumerate(grouped_data):
         y_pred = models[i].predict(group["x"])
+        y_true = np.append(y_true, group["y"])
         y_preds = np.append(y_preds, y_pred)
 
     # compute mse
-    y_test = price_scaler.inverse_transform(y_test)
+    y_test = price_scaler.inverse_transform(y_true.reshape(-1, 1))
     y_preds = price_scaler.inverse_transform(y_preds.reshape(-1, 1))
     mse = mean_squared_error(y_test, y_preds)
 
