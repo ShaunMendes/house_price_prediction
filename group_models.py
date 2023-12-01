@@ -68,7 +68,6 @@ def group_2(data: dict[str, np.ndarray]):
     '''
     pass
 
-
 class TrainGroupModels:
     def __init__(self, price_scaler: StandardScaler):
         self.price_scaler = price_scaler
@@ -164,8 +163,8 @@ class TrainGroupModels:
         test_mse = mean_squared_error(*test_prices)
 
         metrics = {
-            "train_mse": mean_squared_error(*train_prices),
-            "test_mse": mean_squared_error(*test_prices),
+            "train_mse": train_mse,
+            "test_mse": test_mse,
             "train_rmse": mean_squared_error(*train_prices, squared=False),
             "test_rmse": mean_squared_error(*test_prices, squared=False),
             "train_mae": mean_absolute_error(*train_prices),

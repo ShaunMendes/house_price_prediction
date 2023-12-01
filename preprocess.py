@@ -6,106 +6,98 @@ from joblib import dump
 from os.path import join
 from os import makedirs
 
+def create_preprocessors(
+    training_data: pd.DataFrame,
+    standardize_price: bool = True,
+    model_dir="trained_models",
+) -> tuple[
+    dict,
+    dict[str, LabelEncoder],
+    StandardScaler,
+    StandardScaler,
+    PCA,
+]:
+    """
+    Create several sklearn objects to preprocess the data
+    - a dict of label encoders to convert categorical features to integers
+    - a feature scaler to standardize input features
+    - a price scaler to standardize the target variable
+    - a pca instance used to drop the feature count to 35
+    """
 
-# def preprocess(
-#     training_data: pd.DataFrame,
-#     test_data: pd.DataFrame,
-#     standardize_price: bool = True,
-#     model_dir="trained_models",
-# ) -> tuple[
-#     np.ndarray,
-#     np.ndarray,
-#     np.ndarray,
-#     np.ndarray,
-#     dict[str, LabelEncoder],
-#     StandardScaler,
-#     StandardScaler,
-#     PCA,
-# ]:
-#     """
-#     A single function to preprocess training and testing data.
-#     - A list of features will be dropped based on nan count, correlation to other features, etc...
-#     - The emaining nans are removed/imputed.
-#     - All categorical features are converted to integers.
-#     - The features are then standardized.
-#     - PCA is used to reduce the number of features to 35.
-#     """
+    # Use feature selection to reduce feature count
+    training_data = reduce_features(training_data)
 
-#     # Use feature selection to reduce feature count
-#     training_data = reduce_features(training_data)
-#     test_data = reduce_features(test_data)
+    # handle remaining nans: remove/impute
+    training_nan_replacements = create_nan_replacements(training_data)
+    training_data = fill_nans(training_data)
 
-#     # handle remaining nans: remove/impute
-#     training_data, training_nan_replacements = handle_nans(training_data)
-#     test_data, _ = handle_nans(test_data)
+    # convert categorical features to integers
+    label_encoders = create_label_encoders(training_data)
+    training_data = encode_categorical_features(training_data, label_encoders)
 
-#     # convert categorical features to integers
-#     label_encoders = create_label_encoders(training_data)
-#     training_data = encode_categorical_features(training_data, label_encoders)
-#     test_data = encode_categorical_features(test_data, label_encoders)
+    # Seperate the input features from the target and covnert to numpy arrays
+    x_train = training_data.drop(columns=["SalePrice"]).to_numpy()
+    y_train = training_data["SalePrice"].to_numpy()
 
-#     # Seperate the input features from the target and covnert to numpy arrays
-#     x_train = training_data.drop(columns=["SalePrice"]).to_numpy()
-#     y_train = training_data["SalePrice"].to_numpy()
-#     x_test = test_data.drop(columns=["SalePrice"]).to_numpy()
-#     y_test = test_data["SalePrice"].to_numpy()
+    # create and fit a scaler for the input features
+    feature_scaler = StandardScaler()
+    feature_scaler.fit(x_train)
+    x_train = standardize_data(x_train, feature_scaler)
 
-#     # standardize features
-#     if standardize_price:
-#         x_train, x_test, feature_scaler = standardize_data(x_train, x_test)
-#         y_train, y_test, price_scaler = standardize_data(y_train, y_test)
-#     else:
-#         x_train, x_test, feature_scaler = standardize_data(x_train, x_test)
+    # standardize price if necessary
+    if standardize_price:
+        price_scaler = StandardScaler()
+        price_scaler.fit(y_train)
+        y_train = standardize_data(y_train, price_scaler)
 
-#     # utilize pca to drop remaining feature count to 35
-#     x_train, x_test, pca = run_pca(x_train, x_test)
+    # utilize pca to drop remaining feature count to 35
+    x_train, x_test, pca = run_pca(x_train, x_test)
 
-#     # save all trained components
-#     makedirs(model_dir, exist_ok=True)
-#     dump(training_nan_replacements, join(model_dir, 'nan_replacements'))
-#     dump(label_encoders, join(model_dir, "label_encoders"))
-#     dump(feature_scaler, join(model_dir, "feature_scaler"))
-#     dump(price_scaler, join(model_dir, "price_scaler"))
-#     dump(pca, join(model_dir, "pca"))
+    # save all trained components
+    makedirs(model_dir, exist_ok=True)
+    dump(training_nan_replacements, join(model_dir, 'nan_replacements'))
+    dump(label_encoders, join(model_dir, "label_encoders"))
+    dump(feature_scaler, join(model_dir, "feature_scaler"))
+    dump(price_scaler, join(model_dir, "price_scaler"))
+    dump(pca, join(model_dir, "pca"))
 
-#     if standardize_price:
-#         return (
-#             x_train,
-#             y_train.flatten(),
-#             x_test,
-#             y_test.flatten(),
-#             label_encoders,
-#             feature_scaler,
-#             price_scaler,
-#             pca,
-#         )
-#     else:
-#         return x_train, y_train, x_test, y_test, label_encoders, feature_scaler, pca
+    if standardize_price:
+        return (
+            training_nan_replacements,
+            label_encoders,
+            feature_scaler,
+            price_scaler,
+            pca,
+        )
+    else:
+        return training_nan_replacements, label_encoders, feature_scaler, pca
 
-
-def preprocess_for_inference(
-    test_data: pd.DataFrame,
+def preprocess(
+    data: pd.DataFrame,
     nan_replacements: dict[str, float],
     label_encoders: dict[str, LabelEncoder],
     feature_scaler: StandardScaler,
-    price_scaler: StandardScaler,
+    price_scaler: StandardScaler | None,
     pca: PCA,
-):
+) -> tuple[np.ndarray, np.ndarray]:
     
-    test_data = reduce_features(test_data)
-    test_data = fill_nans(test_data, nan_replacements)
-    test_data = test_data.dropna()
-    test_data = encode_categorical_features(test_data, label_encoders)
+    ''' Utilized pre-generated preprocessors to prepare the data '''
+    
+    data = reduce_features(data)
+    data = fill_nans(data, nan_replacements)
+    data = encode_categorical_features(data, label_encoders)
 
-    x_test = test_data.drop(columns=["SalePrice"]).to_numpy()
-    y_test = test_data["SalePrice"].to_numpy()
+    x = data.drop(columns=["SalePrice"]).to_numpy()
+    y = data["SalePrice"].to_numpy()
 
-    x_test = feature_scaler.transform(x_test)
-    y_test = price_scaler.transform(y_test.reshape([-1, 1]))
-    x_test = pca.transform(x_test)
+    x = standardize_data(x, feature_scaler)
+    if price_scaler is not None: 
+        y = standardize_data(y, price_scaler)
 
-    return x_test, y_test
+    x = pca.transform(x)
 
+    return x, y
 
 def reduce_features(data: pd.DataFrame):
     """
@@ -155,34 +147,30 @@ def reduce_features(data: pd.DataFrame):
 
     return data
 
+def create_nan_replacements(data: pd.DataFrame) -> dict:
+    """ 
+    loop through the provided dataset and search for features with nans. 
+    for each one of these features, determine a value that would be a suitable replacement for nans.
+    for numeric values, the average will be used.
+    for categorical values, the most common value will be used.
+    """
 
-def handle_nans(
-    data: pd.DataFrame, save_path: str = "", is_test: bool = False
-) -> tuple[pd.DataFrame, dict[str, float]]:
-    """TODO: finish implementation & doc string"""
+    nan_replacements = {}
 
-    nan_replacements = {
-        'LotFrontage': data["LotFrontage"].mean(),
-        'BsmtQual': 'TA',
-        'BsmtCond': 'TA',
-        'BsmtExposure': 'No',
-        'BsmtFinType1': 'Unf',
-        'BsmtFinType2': 'Unf',
-        'Electrical': 'SBrkr',
-        'GarageType': 'Attchd',
-        'GarageQual': 'TA'
-    }
+    for feature in data:
+        if data[feature].isna().sum() > 0:
+            if data[feature].dtype == "object":
+                nan_replacements[feature] = data[feature].value_counts().idxmax()
+            else:
+                nan_replacements[feature] = data[feature].mean()
 
-    data = fill_nans(data, nan_replacements)
-    data = data.dropna()
-
-    return data, nan_replacements
+    return nan_replacements
 
 def fill_nans(data: pd.DataFrame, nan_replacements: dict[str, float]) -> pd.DataFrame:
+    ''' use the nan replacement dict to replace nans within the dataset '''
     for feature in nan_replacements:
         data[feature] = data[feature].fillna(nan_replacements[feature])
     return data
-
 
 def create_label_encoders(data: pd.DataFrame) -> dict[str, LabelEncoder]:
     """
@@ -196,7 +184,6 @@ def create_label_encoders(data: pd.DataFrame) -> dict[str, LabelEncoder]:
             label_encoders[feature] = LabelEncoder().fit(data[feature])
     return label_encoders
 
-
 def encode_categorical_features(
     data: pd.DataFrame, label_encoders: dict[str, LabelEncoder]
 ) -> pd.DataFrame:
@@ -208,18 +195,12 @@ def encode_categorical_features(
         data[feature] = label_encoders[feature].transform(data[feature])
     return data
 
-
-def standardize_data(train: np.ndarray, test: np.ndarray):
-    """TODO: finish doc string"""
-    scaler = StandardScaler()
-    if len(train.shape) == 1:
-        train = train.reshape([-1, 1])
-    if len(test.shape) == 1:
-        test = test.reshape([-1, 1])
-    train = scaler.fit_transform(train)
-    test = scaler.transform(test)
-    return train, test, scaler
-
+def standardize_data(data: np.ndarray, scaler) -> np.ndarray:
+    """ Use the provided StandardScaler to standardize the numpy array """
+    if len(data.shape) == 1:
+        data = data.reshape([-1, 1])
+    data = scaler.transform(data)
+    return data
 
 def run_pca(
     training_data: np.ndarray, test_data: np.ndarray

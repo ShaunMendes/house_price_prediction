@@ -25,6 +25,3 @@ def train_kmeans(data, k, max_iter=300, num_trials=10, output_file='trained_mode
     kmeans.fit(data)
     dump(kmeans, output_file)
     return kmeans
-
-def load_kmeans():
-    pass

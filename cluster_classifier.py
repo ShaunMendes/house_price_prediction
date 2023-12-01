@@ -58,7 +58,10 @@ def fit_classifier(x, y, output_file='trained_models/svm'):
     return svm, training_accuracy
 
 def create_groups(classifier, k: int, x_train: np.ndarray, y_train: np.ndarray, x_test: np.ndarray, y_test: np.ndarray, val_size: float = 0.1, output_dir='datasets/groups/'):
-
+    '''
+    Assigns data to clusters, and creates three partitions: train, val, and test.
+    '''
+    
     # set up a list to store the subsets
     groups = []
 
@@ -97,10 +100,28 @@ def create_groups(classifier, k: int, x_train: np.ndarray, y_train: np.ndarray, 
         for key in group_data:
             np.save(join(dir, f'{key}.npy'), group_data[key])
 
-    # # code to dump the subsets to a pickle file
-    # groups_file = open('groups.pkl', 'wb')
-    # dump(groups, groups_file)
-    # groups_file.close()
+    return groups
+
+def assign_to_clusters(classifier, k, x, y) -> list[dict[str, np.ndarray]]:
+    '''
+    Assigns data to clusters. No partitions, just x and y.
+    '''
+    
+    # set up a list to store the subsets
+    groups = []
+
+    # run inference
+    groups = classifier.predict(x)
+
+    # create k subsets
+    for i in range(k):
+
+        group_data = {
+            'x': x[groups == i],
+            'y': y[groups == i],
+        }
+
+        groups.append(group_data)
 
     return groups
 

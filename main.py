@@ -1,4 +1,4 @@
-from preprocess import preprocess_for_inference
+from preprocess import preprocess
 from kmeans import elbow_method, train_kmeans
 from cluster_classifier import (
     test_classifiers,
@@ -12,43 +12,14 @@ from group_models import TrainGroupModels, start_regressor_expeirments
 import pandas as pd
 import numpy as np
 from os.path import exists
-
-K = 3
-
-# def test_data_predicton(training_data: pd.DataFrame, test_data: pd.DataFrame):
-#     """
-#     TODO: this is a function the professor requires us to implement. requirements listed below:
-
-#     Write a function, test_data_prediction(train data, test data), that transforms the test
-#     data into the train data format, e.g., the same features, scales, etc, and predicts the
-#     house price using the trained best models.
-
-#     NOTE: does the prof expect us to run training and test inference from this function?
-#         if not, then why accept the training data as an input?
-
-#     """
-
-#     # preprocess data
-#     x_train, y_train, x_test, y_test, label_encoders, scaler, pca = preprocess(
-#         training_data, test_data, standardize_price=True
-#     )
-
-#     """
-#     TODO: train the models here? load prexisting trained models? pass the models in?
-
-#     - use the classifier to predict which group each sample belongs to
-#     - use the group model that corresponds to each sample's predicted group to run inference.
-#     - return results?
-
-    # """
-
+from constants import K
 
 if __name__ == "__main__":
     # # load and preprocess data
     # training_data = pd.read_csv('datasets/train.csv')
     test_data = pd.read_csv('datasets/test.csv')
     # x_train, y_train, x_test, y_test, label_encoders, feature_scaler, price_scaler, pca = preprocess(training_data, test_data, standardize_price=True)
-    x_test, y_test = preprocess_for_inference(
+    x_test, y_test = preprocess(
         test_data,
         load('trained_models/nan_replacements'),
         load('trained_models/label_encoders'),
