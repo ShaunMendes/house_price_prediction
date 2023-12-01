@@ -1,4 +1,4 @@
-from preprocess import preprocess
+from preprocess import preprocess, preprocess_for_inference
 from kmeans import elbow_method, train_kmeans
 from cluster_classifier import (
     test_classifiers,
@@ -14,7 +14,6 @@ import numpy as np
 from os.path import exists
 
 K = 3
-
 
 def test_data_predicton(training_data: pd.DataFrame, test_data: pd.DataFrame):
     """
@@ -47,8 +46,17 @@ def test_data_predicton(training_data: pd.DataFrame, test_data: pd.DataFrame):
 if __name__ == "__main__":
     # # load and preprocess data
     # training_data = pd.read_csv('datasets/train.csv')
-    # test_data = pd.read_csv('datasets/test.csv')
+    test_data = pd.read_csv('datasets/test.csv')
     # x_train, y_train, x_test, y_test, label_encoders, feature_scaler, price_scaler, pca = preprocess(training_data, test_data, standardize_price=True)
+    preprocess_for_inference(
+        test_data,
+        load('trained_models/nan_replacements'),
+        load('trained_models/label_encoders'),
+        load('trained_models/feature_scaler'),
+        load('trained_models/price_scaler'),
+        load('trained_models/pca'),
+    )
+
 
     # load price scaler
     price_scaler = load('trained_models/price_scaler')

@@ -36,8 +36,8 @@ def preprocess(
     test_data = reduce_features(test_data)
 
     # handle remaining nans: remove/impute
-    training_data = handle_nans(training_data)
-    test_data = handle_nans(test_data)
+    training_data, training_nan_replacements = handle_nans(training_data)
+    test_data, _ = handle_nans(test_data)
 
     # convert categorical features to integers
     label_encoders = create_label_encoders(training_data)
@@ -62,6 +62,7 @@ def preprocess(
 
     # save all trained components
     makedirs(model_dir, exist_ok=True)
+    dump(training_nan_replacements, join(model_dir, 'nan_replacements'))
     dump(label_encoders, join(model_dir, "label_encoders"))
     dump(feature_scaler, join(model_dir, "feature_scaler"))
     dump(price_scaler, join(model_dir, "price_scaler"))
@@ -84,13 +85,16 @@ def preprocess(
 
 def preprocess_for_inference(
     test_data: pd.DataFrame,
+    nan_replacements: dict[str, float],
     label_encoders: dict[str, LabelEncoder],
     feature_scaler: StandardScaler,
     price_scaler: StandardScaler,
     pca: PCA,
 ):
+    
     test_data = reduce_features(test_data)
-    test_data = handle_nans(test_data)
+    test_data = fill_nans(test_data, nan_replacements)
+    test_data = test_data.dropna()
     test_data = encode_categorical_features(test_data, label_encoders)
 
     x_test = test_data.drop(columns=["SalePrice"]).to_numpy()
@@ -154,13 +158,21 @@ def reduce_features(data: pd.DataFrame):
 
 def handle_nans(
     data: pd.DataFrame, save_path: str = "", is_test: bool = False
-) -> pd.DataFrame:
+) -> tuple[pd.DataFrame, dict[str, float]]:
     """TODO: finish implementation & doc string"""
 
-    data["LotFrontage"] = data["LotFrontage"].fillna(data["LotFrontage"].mean())
+    nan_replacements = {
+        'LotFrontage': data["LotFrontage"].mean()
+    }
 
-    # drop rows containing nans. There are 54 rows with nans for 5 features related to garages.
+    data = fill_nans(nan_replacements)
     data = data.dropna()
+
+    return data, nan_replacements
+
+def fill_nans(data: pd.DataFrame, nan_replacements: dict[str, float]) -> pd.DataFrame:
+    for feature in nan_replacements:
+        data[feature] = data[feature].fillna(nan_replacements[feature])
     return data
 
 
