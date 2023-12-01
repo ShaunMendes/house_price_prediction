@@ -7,80 +7,80 @@ from os.path import join
 from os import makedirs
 
 
-def preprocess(
-    training_data: pd.DataFrame,
-    test_data: pd.DataFrame,
-    standardize_price: bool = True,
-    model_dir="trained_models",
-) -> tuple[
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    dict[str, LabelEncoder],
-    StandardScaler,
-    StandardScaler,
-    PCA,
-]:
-    """
-    A single function to preprocess training and testing data.
-    - A list of features will be dropped based on nan count, correlation to other features, etc...
-    - The emaining nans are removed/imputed.
-    - All categorical features are converted to integers.
-    - The features are then standardized.
-    - PCA is used to reduce the number of features to 35.
-    """
+# def preprocess(
+#     training_data: pd.DataFrame,
+#     test_data: pd.DataFrame,
+#     standardize_price: bool = True,
+#     model_dir="trained_models",
+# ) -> tuple[
+#     np.ndarray,
+#     np.ndarray,
+#     np.ndarray,
+#     np.ndarray,
+#     dict[str, LabelEncoder],
+#     StandardScaler,
+#     StandardScaler,
+#     PCA,
+# ]:
+#     """
+#     A single function to preprocess training and testing data.
+#     - A list of features will be dropped based on nan count, correlation to other features, etc...
+#     - The emaining nans are removed/imputed.
+#     - All categorical features are converted to integers.
+#     - The features are then standardized.
+#     - PCA is used to reduce the number of features to 35.
+#     """
 
-    # Use feature selection to reduce feature count
-    training_data = reduce_features(training_data)
-    test_data = reduce_features(test_data)
+#     # Use feature selection to reduce feature count
+#     training_data = reduce_features(training_data)
+#     test_data = reduce_features(test_data)
 
-    # handle remaining nans: remove/impute
-    training_data, training_nan_replacements = handle_nans(training_data)
-    test_data, _ = handle_nans(test_data)
+#     # handle remaining nans: remove/impute
+#     training_data, training_nan_replacements = handle_nans(training_data)
+#     test_data, _ = handle_nans(test_data)
 
-    # convert categorical features to integers
-    label_encoders = create_label_encoders(training_data)
-    training_data = encode_categorical_features(training_data, label_encoders)
-    test_data = encode_categorical_features(test_data, label_encoders)
+#     # convert categorical features to integers
+#     label_encoders = create_label_encoders(training_data)
+#     training_data = encode_categorical_features(training_data, label_encoders)
+#     test_data = encode_categorical_features(test_data, label_encoders)
 
-    # Seperate the input features from the target and covnert to numpy arrays
-    x_train = training_data.drop(columns=["SalePrice"]).to_numpy()
-    y_train = training_data["SalePrice"].to_numpy()
-    x_test = test_data.drop(columns=["SalePrice"]).to_numpy()
-    y_test = test_data["SalePrice"].to_numpy()
+#     # Seperate the input features from the target and covnert to numpy arrays
+#     x_train = training_data.drop(columns=["SalePrice"]).to_numpy()
+#     y_train = training_data["SalePrice"].to_numpy()
+#     x_test = test_data.drop(columns=["SalePrice"]).to_numpy()
+#     y_test = test_data["SalePrice"].to_numpy()
 
-    # standardize features
-    if standardize_price:
-        x_train, x_test, feature_scaler = standardize_data(x_train, x_test)
-        y_train, y_test, price_scaler = standardize_data(y_train, y_test)
-    else:
-        x_train, x_test, feature_scaler = standardize_data(x_train, x_test)
+#     # standardize features
+#     if standardize_price:
+#         x_train, x_test, feature_scaler = standardize_data(x_train, x_test)
+#         y_train, y_test, price_scaler = standardize_data(y_train, y_test)
+#     else:
+#         x_train, x_test, feature_scaler = standardize_data(x_train, x_test)
 
-    # utilize pca to drop remaining feature count to 35
-    x_train, x_test, pca = run_pca(x_train, x_test)
+#     # utilize pca to drop remaining feature count to 35
+#     x_train, x_test, pca = run_pca(x_train, x_test)
 
-    # save all trained components
-    makedirs(model_dir, exist_ok=True)
-    dump(training_nan_replacements, join(model_dir, 'nan_replacements'))
-    dump(label_encoders, join(model_dir, "label_encoders"))
-    dump(feature_scaler, join(model_dir, "feature_scaler"))
-    dump(price_scaler, join(model_dir, "price_scaler"))
-    dump(pca, join(model_dir, "pca"))
+#     # save all trained components
+#     makedirs(model_dir, exist_ok=True)
+#     dump(training_nan_replacements, join(model_dir, 'nan_replacements'))
+#     dump(label_encoders, join(model_dir, "label_encoders"))
+#     dump(feature_scaler, join(model_dir, "feature_scaler"))
+#     dump(price_scaler, join(model_dir, "price_scaler"))
+#     dump(pca, join(model_dir, "pca"))
 
-    if standardize_price:
-        return (
-            x_train,
-            y_train.flatten(),
-            x_test,
-            y_test.flatten(),
-            label_encoders,
-            feature_scaler,
-            price_scaler,
-            pca,
-        )
-    else:
-        return x_train, y_train, x_test, y_test, label_encoders, feature_scaler, pca
+#     if standardize_price:
+#         return (
+#             x_train,
+#             y_train.flatten(),
+#             x_test,
+#             y_test.flatten(),
+#             label_encoders,
+#             feature_scaler,
+#             price_scaler,
+#             pca,
+#         )
+#     else:
+#         return x_train, y_train, x_test, y_test, label_encoders, feature_scaler, pca
 
 
 def preprocess_for_inference(
@@ -101,7 +101,7 @@ def preprocess_for_inference(
     y_test = test_data["SalePrice"].to_numpy()
 
     x_test = feature_scaler.transform(x_test)
-    y_test = price_scaler.transform(y_test)
+    y_test = price_scaler.transform(y_test.reshape([-1, 1]))
     x_test = pca.transform(x_test)
 
     return x_test, y_test
@@ -162,10 +162,18 @@ def handle_nans(
     """TODO: finish implementation & doc string"""
 
     nan_replacements = {
-        'LotFrontage': data["LotFrontage"].mean()
+        'LotFrontage': data["LotFrontage"].mean(),
+        'BsmtQual': 'TA',
+        'BsmtCond': 'TA',
+        'BsmtExposure': 'No',
+        'BsmtFinType1': 'Unf',
+        'BsmtFinType2': 'Unf',
+        'Electrical': 'SBrkr',
+        'GarageType': 'Attchd',
+        'GarageQual': 'TA'
     }
 
-    data = fill_nans(nan_replacements)
+    data = fill_nans(data, nan_replacements)
     data = data.dropna()
 
     return data, nan_replacements
