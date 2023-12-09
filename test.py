@@ -6,8 +6,8 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import mean_squared_error
 
-
 def test_data_predicton(training_data: pd.DataFrame, test_data: pd.DataFrame):
+    
     # use the training data to fit preprocessors
     (
         nan_replacements,
@@ -45,10 +45,20 @@ def test_data_predicton(training_data: pd.DataFrame, test_data: pd.DataFrame):
     # run inference
     y_preds = np.array([])
     y_true = np.array([])
+
     for i, group in enumerate(grouped_data):
+
         y_pred = models[i].predict(group["x"])
+
         y_true = np.append(y_true, group["y"])
         y_preds = np.append(y_preds, y_pred)
+
+        mse = mean_squared_error(
+            price_scaler.inverse_transform(group["y"].reshape(-1, 1)),
+            price_scaler.inverse_transform(y_pred.reshape(-1, 1)),
+        )
+
+        print(f"The mse for group {i} is {mse} and rmse is {np.sqrt(mse)}")
 
     # compute mse
     y_test = price_scaler.inverse_transform(y_true.reshape(-1, 1))
@@ -57,9 +67,7 @@ def test_data_predicton(training_data: pd.DataFrame, test_data: pd.DataFrame):
 
     print(f"The mse is {mse} and rmse is {np.sqrt(mse)}")
 
-
 if __name__ == "__main__":
     training_data = pd.read_csv("datasets/train.csv")
     test_data = pd.read_csv("datasets/test.csv")
-
     test_data_predicton(training_data, test_data)

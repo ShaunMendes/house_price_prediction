@@ -75,7 +75,7 @@ def create_preprocessors(
             most_common_label,
             feature_scaler,
             price_scaler,
-            pca,
+            pca
         )
     else:
         return (
@@ -83,7 +83,7 @@ def create_preprocessors(
             label_encoders,
             most_common_label,
             feature_scaler,
-            pca,
+            pca
         )
 
 
@@ -174,11 +174,10 @@ def create_nan_replacements(data: pd.DataFrame) -> dict:
     nan_replacements = {}
 
     for feature in data:
-        if data[feature].isna().sum() > 0:
-            if data[feature].dtype == "object":
-                nan_replacements[feature] = data[feature].value_counts().idxmax()
-            else:
-                nan_replacements[feature] = data[feature].mean()
+        if data[feature].dtype == "object":
+            nan_replacements[feature] = data[feature].value_counts().idxmax()
+        else:
+            nan_replacements[feature] = data[feature].mean()
 
     return nan_replacements
 

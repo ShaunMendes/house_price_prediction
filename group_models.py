@@ -8,90 +8,36 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.preprocessing import StandardScaler
 import numpy as np
 import optuna
+from joblib import dump, load
 from cluster_classifier import load_groups
 
-def group_0(data: dict[str, np.ndarray], scaler: StandardScaler):
-    '''
-    TODO: try tuning a boosting model to see if its better than one of these 4
-    '''
-
-    group_0_model = StackingRegressor([
-        ('LinearRegression', LinearRegression()),
-        ('Ridge', Ridge(alpha=4.45, solver='lsqr')),
-        ('SVR', SVR(kernel='linear', gamma='scale', C=0.01412668132688239)),
-        ('MLPR', MLPRegressor(
-            hidden_layer_sizes=(40,65),
-            activation='identity',
-            solver='adam',
-            alpha=0.00033734602221738514,
-            learning_rate='constant',
-            learning_rate_init=0.011891710835565153
-        ))
-    ])
-
-    # now that tuning is complete, re-merge the training and validation data. 
-    # i believe the regressor performs a k fold anyways
-    x_train = np.row_stack([data['x_train'], data['x_val']])
-    y_train = np.concatenate([data['y_train'], data['y_val']])
-
-    group_0_model.fit(x_train, y_train)
-
-    # TODO compute MAE and RMSE
-    train_prices = (scaler.inverse_transform(y_train.reshape(-1, 1)), scaler.inverse_transform(group_0_model.predict(x_train).reshape(-1, 1)))
-    test_prices = (scaler.inverse_transform(data['y_test'].reshape(-1, 1)), scaler.inverse_transform(group_0_model.predict(data['x_test']).reshape(-1, 1)))
-
-    train_mse = mean_squared_error(*train_prices)
-    test_mse = mean_squared_error(*test_prices)
-
-    metrics = {
-        'train_mse': mean_squared_error(*train_prices),
-        'test_mse': mean_squared_error(*test_prices),
-        'train_rmse': mean_squared_error(*train_prices, squared=False),
-        'test_rmse': mean_squared_error(*test_prices, squared=False),  
-        'train_mae': mean_absolute_error(*train_prices),
-        'test_mae': mean_absolute_error(*test_prices)
-    }
-
-    return group_0_model, metrics
-
-def group_1(data: dict[str, np.ndarray]):
-    '''
-    TODO: Create and train a StackingRegressor to predict prices for this group
-    shaun
-    '''
-    pass
-
-def group_2(data: dict[str, np.ndarray]):
-    '''
-    TODO: Create and train a StackingRegressor to predict prices for this group
-    harsha
-    '''
-    pass
-
 class TrainGroupModels:
-    def __init__(self, price_scaler: StandardScaler):
+    
+    def __init__(self, price_scaler: StandardScaler, data_groups: list[dict[str, np.ndarray]]):
         self.price_scaler = price_scaler
+        self.data_groups = data_groups
 
     def group_0(self) -> StackingRegressor:
         # jesse
-        return StackingRegressor(
-            [
-                ("LinearRegression", LinearRegression()),
-                ("Ridge", Ridge(alpha=10, solver="saga")),
-                ("SVR", SVR(kernel="linear", gamma="scale", C=2.3609999999999998)),
-                (
-                    "MLPR",
-                    MLPRegressor(
-                        hidden_layer_sizes=(30, 20),
-                        activation="identity",
-                        solver="adam",
-                        alpha=0.005559340227398926,
-                        learning_rate="adaptive",
-                        learning_rate_init=0.0006506360597208436,
-                    ),
-                ),
-            ]
-        )
+        return StackingRegressor([
+            ("LinearRegression", LinearRegression(fit_intercept=False, positive=True)),
+            ("SVR", SVR(kernel="linear", gamma="scale", C=0.07363163663247542)),
+            ("MLPR", MLPRegressor(
+                    hidden_layer_sizes=(50),
+                    activation="identity",
+                    solver="sgd",
+                    alpha=3.212355441586101e-05,
+                    learning_rate="constant",
+                    learning_rate_init=0.0005917757238956201,
+                    max_iter=500)),
+            ('Boosting', GradientBoostingRegressor(
+                loss='squared_error',
+                learning_rate=0.09943697393602592,
+                n_estimators=150,
+                subsample=0.4,
+                alpha=0.05,
+                warm_start=False))
+        ])
 
     def group_1(self) -> StackingRegressor:
         # shaun
@@ -122,29 +68,44 @@ class TrainGroupModels:
         return StackingRegressor(estimators)
 
     def group_2(self) -> StackingRegressor:
-        # harsha
-        pass
+        return StackingRegressor([
+            ("Ridge", Ridge(alpha=100.41, solver="lsqr")),
+            ("SVR", SVR(kernel="linear", gamma="scale", C=0.006095992841417654)),
+            ("MLPR", MLPRegressor(
+                hidden_layer_sizes=(80),
+                activation="logistic",
+                solver="sgd",
+                alpha=0.0740713941735538,
+                learning_rate="constant",
+                learning_rate_init=0.06362047586396534)),
+            ('Boosting', GradientBoostingRegressor(
+                loss='absolute_error',
+                learning_rate=0.09919099881717677,
+                n_estimators=390,
+                subsample=0.7,
+                alpha=0.6,
+                warm_start=False))     
+        ])
 
-    def group_ds_path(self, group_id):
-        return f"datasets/groups/{group_id}"
+    # def group_ds_path(self, group_id):
+    #     return f"datasets/groups/{group_id}"
 
     def group_model(self, group_id) -> StackingRegressor:
-        # change this once harsha's model is ready
-        models = {0: self.group_0, 1: self.group_1, 2: self.group_1}
+        models = {0: self.group_0, 1: self.group_1, 2: self.group_2}
         return models[group_id]
 
-    def load_data(self, group_id):
-        return load_groups(self.group_ds_path(group_id))
+    # def load_data(self, group_id):
+    #     return load_groups(self.group_ds_path(group_id))
 
-    def train_and_evaluate(self, group_id: str):
+    def train_and_evaluate(self, group_id: int):
         print(f"Training Group {group_id}")
-        data = self.load_data(group_id)
+        data = self.data_groups[group_id]
         stacked_model = self.group_model(group_id)()
 
         x_train = np.row_stack([data["x_train"], data["x_val"]])
         y_train = np.concatenate([data["y_train"], data["y_val"]])
 
-        stacked_model.fit(x_train, y_train)
+        stacked_model.fit(x_train, y_train.flatten())
 
         train_prices = (
             self.price_scaler.inverse_transform(y_train.reshape(-1, 1)),
@@ -159,23 +120,19 @@ class TrainGroupModels:
             ),
         )
 
-        train_mse = mean_squared_error(*train_prices)
-        test_mse = mean_squared_error(*test_prices)
-
         metrics = {
-            "train_mse": train_mse,
-            "test_mse": test_mse,
+            "train_mse": mean_squared_error(*train_prices),
+            "test_mse": mean_squared_error(*test_prices),
             "train_rmse": mean_squared_error(*train_prices, squared=False),
             "test_rmse": mean_squared_error(*test_prices, squared=False),
             "train_mae": mean_absolute_error(*train_prices),
             "test_mae": mean_absolute_error(*test_prices),
         }
-        print(f"Test MSE is {metrics}")
-        return stacked_model, train_mse, test_mse
+        print(metrics)
 
+        return stacked_model
 
 """ Hyper tuning studies """
-
 
 def tune_lr(data: dict[str, np.ndarray], scaler, db_name="db"):
     def regressor_trial(trial: optuna.Trial):
@@ -185,10 +142,10 @@ def tune_lr(data: dict[str, np.ndarray], scaler, db_name="db"):
         )
 
         regressor.fit(data["x_train"], data["y_train"])
-        return mean_squared_error(
+        return np.sqrt(mean_squared_error(
             scaler.inverse_transform(data["y_val"].reshape(-1, 1)),
             scaler.inverse_transform(regressor.predict(data["x_val"]).reshape(-1, 1)),
-        )
+        ))
 
     study = optuna.create_study(
         direction="minimize",
@@ -199,7 +156,6 @@ def tune_lr(data: dict[str, np.ndarray], scaler, db_name="db"):
 
     study.optimize(regressor_trial, n_trials=4)
 
-
 def tune_lasso(data: dict[str, np.ndarray], scaler, db_name="db"):
     def regressor_trial(trial: optuna.Trial):
         regressor = Lasso(
@@ -207,10 +163,10 @@ def tune_lasso(data: dict[str, np.ndarray], scaler, db_name="db"):
         )
 
         regressor.fit(data["x_train"], data["y_train"])
-        return mean_squared_error(
+        return np.sqrt(mean_squared_error(
             scaler.inverse_transform(data["y_val"].reshape(-1, 1)),
             scaler.inverse_transform(regressor.predict(data["x_val"]).reshape(-1, 1)),
-        )
+        ))
 
     study = optuna.create_study(
         direction="minimize",
@@ -220,7 +176,6 @@ def tune_lasso(data: dict[str, np.ndarray], scaler, db_name="db"):
     )
 
     study.optimize(regressor_trial, n_trials=2)
-
 
 def tune_ridge(data: dict[str, np.ndarray], scaler, db_name="db"):
     def regressor_trial(trial: optuna.Trial):
@@ -233,10 +188,10 @@ def tune_ridge(data: dict[str, np.ndarray], scaler, db_name="db"):
         )
 
         regressor.fit(data["x_train"], data["y_train"])
-        return mean_squared_error(
+        return np.sqrt(mean_squared_error(
             scaler.inverse_transform(data["y_val"].reshape(-1, 1)),
             scaler.inverse_transform(regressor.predict(data["x_val"]).reshape(-1, 1)),
-        )
+        ))
 
     study = optuna.create_study(
         direction="minimize",
@@ -246,7 +201,6 @@ def tune_ridge(data: dict[str, np.ndarray], scaler, db_name="db"):
     )
 
     study.optimize(regressor_trial, n_trials=200)
-
 
 def tune_svr(data: dict[str, np.ndarray], scaler, db_name="db"):
     def regressor_trial(trial: optuna.Trial):
@@ -259,11 +213,11 @@ def tune_svr(data: dict[str, np.ndarray], scaler, db_name="db"):
             C=trial.suggest_float("svr_C", 1e-7, 10, log=True),
         )
 
-        regressor.fit(data["x_train"], data["y_train"])
-        return mean_squared_error(
+        regressor.fit(data["x_train"], data["y_train"].flatten())
+        return np.sqrt(mean_squared_error(
             scaler.inverse_transform(data["y_val"].reshape(-1, 1)),
             scaler.inverse_transform(regressor.predict(data["x_val"]).reshape(-1, 1)),
-        )
+        ))
 
     study = optuna.create_study(
         direction="minimize",
@@ -274,7 +228,6 @@ def tune_svr(data: dict[str, np.ndarray], scaler, db_name="db"):
 
     study.optimize(regressor_trial, n_trials=250)
 
-
 def tune_decision_tree(data: dict[str, np.ndarray], scaler, db_name="db"):
     def regressor_trial(trial: optuna.Trial):
         regressor = DecisionTreeRegressor(
@@ -282,10 +235,10 @@ def tune_decision_tree(data: dict[str, np.ndarray], scaler, db_name="db"):
         )
 
         regressor.fit(data["x_train"], data["y_train"])
-        return mean_squared_error(
+        return np.sqrt(mean_squared_error(
             scaler.inverse_transform(data["y_val"].reshape(-1, 1)),
             scaler.inverse_transform(regressor.predict(data["x_val"]).reshape(-1, 1)),
-        )
+        ))
 
     study = optuna.create_study(
         direction="minimize",
@@ -295,7 +248,6 @@ def tune_decision_tree(data: dict[str, np.ndarray], scaler, db_name="db"):
     )
 
     study.optimize(regressor_trial, n_trials=2)
-
 
 def tune_mlrp(data: dict[str, np.ndarray], scaler, db_name="db"):
     def regressor_trial(trial: optuna.Trial):
@@ -319,13 +271,11 @@ def tune_mlrp(data: dict[str, np.ndarray], scaler, db_name="db"):
         )
 
         try:
-            regressor.fit(data["x_train"], data["y_train"])
-            return mean_squared_error(
+            regressor.fit(data["x_train"], data["y_train"].flatten())
+            return np.sqrt(mean_squared_error(
                 scaler.inverse_transform(data["y_val"].reshape(-1, 1)),
-                scaler.inverse_transform(
-                    regressor.predict(data["x_val"]).reshape(-1, 1)
-                ),
-            )
+                scaler.inverse_transform(regressor.predict(data["x_val"]).reshape(-1, 1)),
+            ))
         except:
             # an exception is thrown if the weights or predictions become infinite
             return None
@@ -339,6 +289,33 @@ def tune_mlrp(data: dict[str, np.ndarray], scaler, db_name="db"):
 
     study.optimize(regressor_trial, n_trials=500)
 
+def tune_boosting(data: dict[str, np.ndarray], scaler, db_name="db"):
+
+    def regressor_trial(trial: optuna.Trial):
+        regressor = GradientBoostingRegressor(
+        loss=trial.suggest_categorical('boost_loss', ['squared_error', 'absolute_error', 'huber', 'quantile']),
+        learning_rate=trial.suggest_float("boost_lr_init", 1e-7, 1e-1, log=True),
+        n_estimators=trial.suggest_int('boost_n_estimators', 10, 1000, step=10),
+        subsample=trial.suggest_float('subsample', 0.1, 0.9, step=0.1),
+        random_state=1234,
+        alpha=trial.suggest_float('boost_alpha', 0.05, 0.95, step=0.05),
+        warm_start=trial.suggest_categorical('boost_warm_start', [True, False]),
+        )
+
+        regressor.fit(data["x_train"], data["y_train"].flatten())
+        return np.sqrt(mean_squared_error(
+            scaler.inverse_transform(data["y_val"].reshape(-1, 1)),
+            scaler.inverse_transform(regressor.predict(data["x_val"]).reshape(-1, 1)),
+        ))
+
+    study = optuna.create_study(
+        direction="minimize",
+        storage=f"sqlite:///{db_name}.sqlite3",
+        study_name="boosting",
+        load_if_exists=True,
+    )
+
+    study.optimize(regressor_trial, n_trials=300)
 
 def start_regressor_expeirments(data, price_scaler, db_name):
     """
@@ -352,6 +329,7 @@ def start_regressor_expeirments(data, price_scaler, db_name):
     tune_svr(data, price_scaler, db_name)
     tune_decision_tree(data, price_scaler, db_name)
     tune_mlrp(data, price_scaler, db_name)
+    tune_boosting(data, price_scaler, db_name)
 
     scores = []
     for study in optuna.study.get_all_study_summaries(
