@@ -5,13 +5,12 @@ import numpy as np
 from joblib import dump
 from os.path import join
 from os import makedirs
-from typing import Union
-
 
 def create_preprocessors(
     training_data: pd.DataFrame,
     standardize_price: bool = True,
     model_dir="trained_models",
+    drop_nans: bool=False
 ) -> tuple[
     dict,
     dict[str, LabelEncoder],
@@ -33,13 +32,14 @@ def create_preprocessors(
 
     # handle remaining nans: remove/impute
     training_nan_replacements = create_nan_replacements(training_data)
-    training_data = fill_nans(training_data, training_nan_replacements)
+    if drop_nans:
+        training_data.dropna(inplace=True)
+    else:
+        training_data = fill_nans(training_data, training_nan_replacements)
 
     # convert categorical features to integers
-    label_encoders, most_common_label = create_label_encoders(training_data)
-    training_data = encode_categorical_features(
-        training_data, label_encoders, most_common_label
-    )
+    label_encoders = create_label_encoders(training_data)
+    training_data = encode_categorical_features(training_data, label_encoders)
 
     # Seperate the input features from the target and covnert to numpy arrays
     x_train = training_data.drop(columns=["SalePrice"]).to_numpy()
@@ -63,7 +63,6 @@ def create_preprocessors(
     makedirs(model_dir, exist_ok=True)
     dump(training_nan_replacements, join(model_dir, "nan_replacements"))
     dump(label_encoders, join(model_dir, "label_encoders"))
-    dump(most_common_label, join(model_dir, "most_common_label"))
     dump(feature_scaler, join(model_dir, "feature_scaler"))
     dump(price_scaler, join(model_dir, "price_scaler"))
     dump(pca, join(model_dir, "pca"))
@@ -72,7 +71,6 @@ def create_preprocessors(
         return (
             training_nan_replacements,
             label_encoders,
-            most_common_label,
             feature_scaler,
             price_scaler,
             pca
@@ -81,7 +79,6 @@ def create_preprocessors(
         return (
             training_nan_replacements,
             label_encoders,
-            most_common_label,
             feature_scaler,
             pca
         )
@@ -91,16 +88,21 @@ def preprocess(
     data: pd.DataFrame,
     nan_replacements: dict[str, float],
     label_encoders: dict[str, LabelEncoder],
-    most_common_label: dict[str, str],
     feature_scaler: StandardScaler,
     price_scaler: StandardScaler | None,
     pca: PCA,
+    drop_nans: bool = False
 ) -> tuple[np.ndarray, np.ndarray]:
     """Utilized pre-generated preprocessors to prepare the data"""
 
     data = reduce_features(data)
-    data = fill_nans(data, nan_replacements)
-    data = encode_categorical_features(data, label_encoders, most_common_label)
+
+    if drop_nans:
+        data.dropna(inplace=True)
+    else:
+        data = fill_nans(data, nan_replacements)
+
+    data = encode_categorical_features(data, label_encoders)
 
     x = data.drop(columns=["SalePrice"]).to_numpy()
     y = data["SalePrice"].to_numpy()
@@ -191,33 +193,28 @@ def fill_nans(data: pd.DataFrame, nan_replacements: dict[str, float]) -> pd.Data
 
 def create_label_encoders(
     data: pd.DataFrame,
-) -> (dict[str, LabelEncoder], dict[str, str]):
+) -> dict[str, LabelEncoder]:
     """
     Create a label encoder for each string feature in the provided dataset.
     Returns a dictionary of label encoders, which can be accessed using the
     name of the feature (pulled from the provided dataframe).
     """
     label_encoders = {}
-    most_common_label = {}
     for feature in data:
         if data[feature].dtype == "object":
-            most_common_label[feature] = data[feature].mode().iloc[0]
-            data[feature] = data[feature].fillna(most_common_label[feature])
             label_encoders[feature] = LabelEncoder().fit(data[feature])
-    return label_encoders, most_common_label
+    return label_encoders
 
 
 def encode_categorical_features(
     data: pd.DataFrame,
     label_encoders: dict[str, LabelEncoder],
-    most_common_label: dict[str, str],
 ) -> pd.DataFrame:
     """
     Use the provided label encoders to transform string features in the dataset to integers.
     Meant for use on both training and testing data.
     """
     for feature in label_encoders:
-        data[feature] = data[feature].fillna(most_common_label[feature])
         data[feature] = label_encoders[feature].transform(data[feature])
     return data
 

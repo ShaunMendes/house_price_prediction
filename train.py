@@ -1,7 +1,7 @@
 from group_models import TrainGroupModels
 from joblib import dump, load
 from preprocess import create_preprocessors, preprocess
-from constants import K
+from constants import *
 from kmeans import train_kmeans
 from cluster_classifier import fit_classifier, create_groups
 import pandas as pd
@@ -11,26 +11,26 @@ if __name__ == "__main__":
     training_data = pd.read_csv("datasets/train.csv")
     test_data = pd.read_csv("datasets/test.csv")
 
-    nan_replacements, label_encoders, most_common_label, feature_scaler, price_scaler, pca = create_preprocessors(training_data)
+    nan_replacements, label_encoders, feature_scaler, price_scaler, pca = create_preprocessors(training_data, drop_nans=DROP_TRAINING_NANS)
 
     x_train, y_train = preprocess(
         training_data,
         nan_replacements,
         label_encoders,
-        most_common_label,
         feature_scaler,
         price_scaler,
         pca,
+        drop_nans=DROP_TRAINING_NANS
     )
 
     x_test, y_test = preprocess(
         test_data,
         nan_replacements,
         label_encoders,
-        most_common_label,
         feature_scaler,
         price_scaler,
         pca,
+        drop_nans=False
     )
 
     # train kmeans and generate ground truth clusters

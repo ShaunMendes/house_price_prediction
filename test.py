@@ -1,7 +1,7 @@
 from preprocess import preprocess, create_preprocessors
 from cluster_classifier import assign_to_clusters
 from joblib import load
-from constants import K
+from constants import *
 import pandas as pd
 import numpy as np
 from sklearn.metrics import mean_squared_error
@@ -12,21 +12,20 @@ def test_data_predicton(training_data: pd.DataFrame, test_data: pd.DataFrame):
     (
         nan_replacements,
         label_encoders,
-        most_common_label,
         feature_scaler,
         price_scaler,
         pca,
-    ) = create_preprocessors(training_data)
+    ) = create_preprocessors(training_data, drop_nans=DROP_TRAINING_NANS)
 
     # preprocess the data
     x_test, y_test = preprocess(
         test_data,
         nan_replacements,
         label_encoders,
-        most_common_label,
         feature_scaler,
         price_scaler,
         pca,
+        drop_nans=False
     )
 
     # load trained classifier

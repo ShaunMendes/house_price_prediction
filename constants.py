@@ -1,1 +1,2 @@
 K = 3
+DROP_TRAINING_NANS = False

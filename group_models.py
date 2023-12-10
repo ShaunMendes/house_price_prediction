@@ -77,7 +77,8 @@ class TrainGroupModels:
                 solver="sgd",
                 alpha=0.0740713941735538,
                 learning_rate="constant",
-                learning_rate_init=0.06362047586396534)),
+                learning_rate_init=0.06362047586396534,
+                max_iter=400)),
             ('Boosting', GradientBoostingRegressor(
                 loss='absolute_error',
                 learning_rate=0.09919099881717677,
