@@ -6,7 +6,7 @@ from kmeans import train_kmeans
 from cluster_classifier import fit_classifier, create_groups
 import pandas as pd
 
-if __name__ == "__main__":
+def train(prefix=''):
 
     training_data = pd.read_csv("datasets/train.csv")
     test_data = pd.read_csv("datasets/test.csv")
@@ -53,6 +53,16 @@ if __name__ == "__main__":
     model2 = trainer.train_and_evaluate(group_id=2)
 
     # save trained models
-    dump(model0, "./trained_models/model0.pkl")
-    dump(model1, "./trained_models/model1.pkl")
-    dump(model2, "./trained_models/model2.pkl")
+    dump(model0, f"./trained_models/{prefix}model0.pkl")
+    dump(model1, f"./trained_models/{prefix}model1.pkl")
+    dump(model2, f"./trained_models/{prefix}model2.pkl")
+
+def mass_training():
+    for i in range(15):
+        train(f'{i}_')    
+
+
+if __name__ == "__main__":
+
+    train()
+    # mass_training()

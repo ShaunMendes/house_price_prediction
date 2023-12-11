@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import mean_squared_error
 
-def test_data_predicton(training_data: pd.DataFrame, test_data: pd.DataFrame):
+def test_data_predicton(training_data: pd.DataFrame, test_data: pd.DataFrame, prefix=''):
     
     # use the training data to fit preprocessors
     (
@@ -37,9 +37,9 @@ def test_data_predicton(training_data: pd.DataFrame, test_data: pd.DataFrame):
 
     # load trained group model
     models = {}
-    models[0] = load("./trained_models/model0.pkl")
-    models[1] = load("./trained_models/model1.pkl")
-    models[2] = load("./trained_models/model2.pkl")
+    models[0] = load(f"./trained_models/{prefix}model0.pkl")
+    models[1] = load(f"./trained_models/{prefix}model1.pkl")
+    models[2] = load(f"./trained_models/{prefix}model2.pkl")
 
     # run inference
     y_preds = np.array([])
@@ -66,7 +66,17 @@ def test_data_predicton(training_data: pd.DataFrame, test_data: pd.DataFrame):
 
     print(f"The mse is {mse} and rmse is {np.sqrt(mse)}")
 
+    return mse
+
+def mass_test(training_data: pd.DataFrame, test_data: pd.DataFrame):
+    results = []
+    for i in range(15):
+        results.append(test_data_predicton(training_data, test_data, prefix=f'{i}_'))
+
 if __name__ == "__main__":
+
     training_data = pd.read_csv("datasets/train.csv")
     test_data = pd.read_csv("datasets/test.csv")
+
     test_data_predicton(training_data, test_data)
+    # mass_test(training_data, test_data)
