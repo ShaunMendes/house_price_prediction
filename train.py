@@ -45,6 +45,7 @@ def train(prefix=''):
 
     # use the classifier to split data into groups
     groups = create_groups(cluster_svm, K, x_train, y_train, x_test, y_test)
+    # groups = create_groups(kmeans, K, x_train, y_train, x_test, y_test)
 
     # train group models
     trainer = TrainGroupModels(price_scaler=price_scaler, data_groups=groups)

@@ -19,13 +19,12 @@ if __name__ == "__main__":
     training_data = pd.read_csv("datasets/train.csv")
     test_data = pd.read_csv("datasets/test.csv")
 
-    nan_replacements, label_encoders, most_common_label, feature_scaler, price_scaler, pca = create_preprocessors(training_data)
+    nan_replacements, label_encoders, feature_scaler, price_scaler, pca = create_preprocessors(training_data)
 
     x_train, y_train = preprocess(
         training_data,
         nan_replacements,
         label_encoders,
-        most_common_label,
         feature_scaler,
         price_scaler,
         pca
@@ -35,7 +34,6 @@ if __name__ == "__main__":
         test_data,
         nan_replacements,
         label_encoders,
-        most_common_label,
         feature_scaler,
         price_scaler,
         pca

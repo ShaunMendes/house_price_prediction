@@ -30,10 +30,12 @@ def test_data_predicton(training_data: pd.DataFrame, test_data: pd.DataFrame, pr
 
     # load trained classifier
     cluster_svm = load("trained_models/svm")
+    kmeans = load('trained_models/kmeans')
 
     # assign test samples to clusters using our classifier.
     # NOTE: the keys for the dicts stored in grouped_data list are 'x' and 'y'.
     grouped_data = assign_to_clusters(cluster_svm, K, x_test, y_test)
+    # grouped_data = assign_to_clusters(kmeans, K, x_test, y_test)
 
     # load trained group model
     models = {}
