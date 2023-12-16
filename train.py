@@ -1,10 +1,11 @@
-from group_models import TrainGroupModels
+import pandas as pd
 from joblib import dump, load
+
+from group_models import TrainGroupModels
 from preprocess import create_preprocessors, preprocess
 from constants import *
 from kmeans import train_kmeans
 from cluster_classifier import fit_classifier, create_groups
-import pandas as pd
 
 def train(prefix=''):
 
@@ -45,7 +46,6 @@ def train(prefix=''):
 
     # use the classifier to split data into groups
     groups = create_groups(cluster_svm, K, x_train, y_train, x_test, y_test)
-    # groups = create_groups(kmeans, K, x_train, y_train, x_test, y_test)
 
     # train group models
     trainer = TrainGroupModels(price_scaler=price_scaler, data_groups=groups)
@@ -58,12 +58,11 @@ def train(prefix=''):
     dump(model1, f"./trained_models/{prefix}model1.pkl")
     dump(model2, f"./trained_models/{prefix}model2.pkl")
 
-def mass_training():
+def mass_training(prefix=''):
     for i in range(15):
-        train(f'{i}_')    
-
+        train(f'{prefix}_{i}_')  
 
 if __name__ == "__main__":
 
-    train()
-    # mass_training()
+    # train()
+    mass_training('svc')
