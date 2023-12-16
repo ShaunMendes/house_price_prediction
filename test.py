@@ -1,10 +1,11 @@
+import pandas as pd
+import numpy as np
+from sklearn.metrics import mean_squared_error
+
 from preprocess import preprocess, create_preprocessors
 from cluster_classifier import assign_to_clusters
 from joblib import load
 from constants import *
-import pandas as pd
-import numpy as np
-from sklearn.metrics import mean_squared_error
 
 def test_data_predicton(training_data: pd.DataFrame, test_data: pd.DataFrame, prefix=''):
     
@@ -33,9 +34,7 @@ def test_data_predicton(training_data: pd.DataFrame, test_data: pd.DataFrame, pr
     kmeans = load('trained_models/kmeans')
 
     # assign test samples to clusters using our classifier.
-    # NOTE: the keys for the dicts stored in grouped_data list are 'x' and 'y'.
     grouped_data = assign_to_clusters(cluster_svm, K, x_test, y_test)
-    # grouped_data = assign_to_clusters(kmeans, K, x_test, y_test)
 
     # load trained group model
     models = {}
@@ -70,10 +69,14 @@ def test_data_predicton(training_data: pd.DataFrame, test_data: pd.DataFrame, pr
 
     return mse
 
-def mass_test(training_data: pd.DataFrame, test_data: pd.DataFrame):
+def mass_test(training_data: pd.DataFrame, test_data: pd.DataFrame, prefix=''):
     results = []
     for i in range(15):
-        results.append(test_data_predicton(training_data, test_data, prefix=f'{i}_'))
+        results.append(test_data_predicton(training_data, test_data, prefix=f'{prefix}_{i}_'))
+    results = np.array(results)
+    print(f'average mse = {results.mean()}')
+    print(f'average rmse = {np.sqrt(results).mean()}')
+    pass
 
 if __name__ == "__main__":
 
@@ -81,4 +84,4 @@ if __name__ == "__main__":
     test_data = pd.read_csv("datasets/test.csv")
 
     test_data_predicton(training_data, test_data)
-    # mass_test(training_data, test_data)
+    # mass_test(training_data, test_data, prefix='svc')
