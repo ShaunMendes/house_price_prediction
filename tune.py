@@ -174,13 +174,13 @@ def tune_boosting(data: dict[str, np.ndarray], scaler, db_name="db"):
 
     def regressor_trial(trial: optuna.Trial):
         regressor = GradientBoostingRegressor(
-        loss=trial.suggest_categorical('boost_loss', ['squared_error', 'absolute_error', 'huber', 'quantile']),
-        learning_rate=trial.suggest_float("boost_lr_init", 1e-7, 1e-1, log=True),
-        n_estimators=trial.suggest_int('boost_n_estimators', 10, 1000, step=10),
-        subsample=trial.suggest_float('subsample', 0.1, 0.9, step=0.1),
-        random_state=1234,
-        alpha=trial.suggest_float('boost_alpha', 0.05, 0.95, step=0.05),
-        warm_start=trial.suggest_categorical('boost_warm_start', [True, False]),
+            loss=trial.suggest_categorical('boost_loss', ['squared_error', 'absolute_error', 'huber', 'quantile']),
+            learning_rate=trial.suggest_float("boost_lr_init", 1e-7, 1e-1, log=True),
+            n_estimators=trial.suggest_int('boost_n_estimators', 10, 1000, step=10),
+            subsample=trial.suggest_float('subsample', 0.1, 0.9, step=0.1),
+            random_state=1234,
+            alpha=trial.suggest_float('boost_alpha', 0.05, 0.95, step=0.05),
+            warm_start=trial.suggest_categorical('boost_warm_start', [True, False]),
         )
 
         regressor.fit(data["x_train"], data["y_train"].flatten())
