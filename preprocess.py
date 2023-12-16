@@ -136,16 +136,14 @@ def reduce_features(data: pd.DataFrame):
             "LowQualFinSF",  # Majority of values belong to a single category.
             "KitchenAbvGr",  # Majority of values belong to a single category.
             "Heating",  # Majority of values belong to a single category.
-            # 'YearBuilt',    # Highly correlated with many other features.
-            # 'OverallQual',  # Highly correlated with many other features.
             "1stFlrSF",  # rolled into GrLivArea
             "2ndFlrSF",  # rolled into GrLivArea
             "GarageCond",  #
             "GarageYrBlt",  # correlated with 'YearBuilt'.
             "GarageArea",  # correlated with 'GarageCars'.
             "Foundation",  # correlated with 'YearBuilt'.
-            "Neighborhood",  # TODO: test data has categories not found in training data
-            "Exterior1st",  # TODO: test data has categories not found in training data... weak correlation with price
+            "Neighborhood",
+            "Exterior1st",  # weak correlation with price
             "Functional",  # weak correlation with price
             "Unnamed: 0",  # just row numbers
             "Id",  # has all unique ids

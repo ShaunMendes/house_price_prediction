@@ -19,8 +19,8 @@ def test_data_predicton(training_data: pd.DataFrame, test_data: pd.DataFrame, pr
     ) = create_preprocessors(training_data, drop_nans=DROP_TRAINING_NANS)
 
     # preprocess the data
-    x_test, y_test = preprocess(
-        test_data,
+    x_train, y_train = preprocess(
+        training_data,
         nan_replacements,
         label_encoders,
         feature_scaler,
@@ -33,7 +33,7 @@ def test_data_predicton(training_data: pd.DataFrame, test_data: pd.DataFrame, pr
     cluster_svm = load("trained_models/svm")
 
     # assign test samples to clusters using our classifier.
-    grouped_data = assign_to_clusters(cluster_svm, K, x_test, y_test)
+    grouped_data = assign_to_clusters(cluster_svm, K, x_train, y_train)
 
     # load trained group model
     models = {}
