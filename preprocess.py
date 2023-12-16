@@ -128,7 +128,7 @@ def reduce_features(data: pd.DataFrame):
             "MiscFeature",  # 96.9% are nan.
             "Fence",  # 80.6% are nan.
             "FireplaceQu",  # 47.0% are nan. Also highly correlated with 'Fireplaces'.
-            # 'TotRmsAbvGrd', # Highly correlated with 'GrLivArea'.
+            'TotRmsAbvGrd', # Highly correlated with 'GrLivArea'.
             "Exterior2nd",  # Highly correlated with 'Exterior1st'.
             "GarageFinish",  # Highly correlated with 'GarageYrBlt'.
             "BldgType",  # Highly correlated with 'MSSubClass', and many values in one category.
@@ -146,7 +146,7 @@ def reduce_features(data: pd.DataFrame):
             "Foundation",  # correlated with 'YearBuilt'.
             "Neighborhood",  # TODO: test data has categories not found in training data
             "Exterior1st",  # TODO: test data has categories not found in training data... weak correlation with price
-            "Functional",  # TODO: test data has categories not found in training data... weak correlation with price
+            "Functional",  # weak correlation with price
             "Unnamed: 0",  # just row numbers
             "Id",  # has all unique ids
             "Street",  # Majority values belong to single category

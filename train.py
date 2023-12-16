@@ -58,12 +58,11 @@ def train(prefix=''):
     dump(model1, f"./trained_models/{prefix}model1.pkl")
     dump(model2, f"./trained_models/{prefix}model2.pkl")
 
-def mass_training():
+def mass_training(prefix=''):
     for i in range(15):
-        train(f'{i}_')    
-
+        train(f'{prefix}_{i}_')    
 
 if __name__ == "__main__":
 
-    train()
-    # mass_training()
+    # train()
+    mass_training('svc')
